@@ -8,9 +8,11 @@
   3. 字号下限   — CSS 中的 px 字号低于 --floor 即点名(投影件建议 24-34)
   4. 渐变剂量   — linear-gradient 超过 --max-grad 计 P2(slop 签名之一)
   5. emoji      — 出现 emoji 计 P2(除非品牌系统使用)
+  6. --render evidence.json — 渲染级证据(render_probe.js 采集):主题 vs 档案、
+     强调色剂量(areaRatio vs accent_max)、实测最小字号、最差对比对
 
 裁决:P0 存在或 P1≥2 → exit 1。纯 stdlib,无浏览器依赖;
-需要渲染级证据(视线顺序/密度)时由五镜自审的截图环节补齐。
+render_probe.js 由会话浏览器工具执行(见 SKILL 第 6 步闸门链)。
 """
 import argparse
 import json
@@ -54,6 +56,7 @@ def main():
     ap.add_argument("--palette", required=True, help="声明的色板,逗号分隔 hex")
     ap.add_argument("--floor", type=float, default=12, help="字号下限 px(投影件建议 24-34)")
     ap.add_argument("--max-grad", type=int, default=3, help="linear-gradient 容量")
+    ap.add_argument("--render", default=None, help="render_probe.js 采集的 evidence.json")
     args = ap.parse_args()
 
     with open(args.page, encoding="utf-8") as f:
@@ -102,6 +105,33 @@ def main():
     emojis = EMOJI_RE.findall(html)
     if emojis:
         findings.append(("P2", f"emoji 出现 {len(emojis)} 处(除非品牌系统使用)"))
+
+    if args.render:
+        ev = json.load(open(args.render, encoding="utf-8"))
+        prof = {}
+        try:
+            with open(PROFILE, encoding="utf-8") as f:
+                prof = json.load(f)
+        except Exception:
+            pass
+        dreg = prof.get("registers", {}).get(prof.get("default_register", ""), {})
+        want, acc_max = dreg.get("theme"), dreg.get("accent_max_area", 0.10)
+        if want and ev.get("theme") != want:
+            findings.append(("P1", f"PROFILE/渲染: 档案要求 {want} 底,页面实测 {ev.get('theme')} 底(bodyBg={ev.get('bodyBg')})"))
+        bg_hex = (ev.get("bodyBg") or "").upper()
+        loud = [c for c in ev.get("colors", [])[1:]
+                if c["hex"] != bg_hex and c["areaRatio"] > acc_max
+                and not NEUTRAL(int(c["hex"][0:2], 16), int(c["hex"][2:4], 16), int(c["hex"][4:6], 16))]
+        if loud:
+            findings.append(("P1", "剂量失控(渲染实测): " +
+                             ", ".join(f"#{c['hex']} 占 {c['areaRatio']*100:.0f}% (>{acc_max*100:.0f}%)" for c in loud[:3])))
+        mf = ev.get("minFont", 99)
+        if mf < args.floor:
+            findings.append(("P2", f"渲染实测最小字号 {mf}px < {args.floor}px(样本: {ev.get('fontSample','')[:20]})"))
+        worst = [p for p in ev.get("worstPairs", []) if p["ratio"] < 3.0]
+        if worst:
+            findings.append(("P1", "实测对比对不足 3:1: " +
+                             ", ".join(f"#{p['fg']}/#{p['bg']}={p['ratio']}" for p in worst[:3])))
 
     order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
     for sev, msg in sorted(findings, key=lambda t: order[t[0]]):

@@ -1,5 +1,5 @@
 ---
-version: 0.2.0
+version: 0.2.1
 name: aesthete-agent
 description: AI 的前端美学引擎(Aesthete Agent)。写 UI/HTML、SVG 幻灯片、视频封面、图表、海报等任何需要颜色的设计任务时,用六步法出配色:命名美学宣言→语域判定→选来源(87 板 coolors 实证库 match 匹配/OKLCH 谐和生成/图像取色/明度阶梯)→60-30-10 角色化(含语义色)→score 五维评分卡+WCAG 对比度+色盲模拟机械验证→card 上下文预览+五镜自审(有界修复)。内置 AI-slop 检测(紫渐变/中位数陷阱)、lint_page 交付审计、profile.json 偏好学习档案(用户每次裁决自动生效)。纯标准库离线可用。触发词:配色、调色板、配色方案、颜色搭配、前端美学、UI配色、设计美学、color palette、color scheme、design aesthetics、hex、对比度、WCAG、色盲、视觉审美、aesthete-agent。
 ---
@@ -13,7 +13,8 @@ description: AI 的前端美学引擎(Aesthete Agent)。写 UI/HTML、SVG 幻灯
 2. **禁止运行时访问 coolors.co**——无公开 API,curl 全被 Cloudflare 403(2026-10 实测);数据已离线内置。
 3. **The brief wins**(impeccable 铁律):用户/上游指定的颜色与美学方向是绑定约束,本 skill 围绕它服务,不越权重配。既定锁定色系管线(NPG / Bees & Honey / GLM 黄蓝)不受本 skill 改配。
 4. **有界验证**(impeccable 纪律):完整做完→一轮批量自审→一轮批量修复→最多再确认一次→**停止打磨**。开放式反复自审烧钱且产出更差。
-5. **裁决回写**(学习机制):用户每次接受/否决,必须落 `profile.json`(机读,match/score/lint 自动消费)与 `critique.md` 尸检(可迁移失败模式)——不回写=本轮白干,skill 永远不长。
+5. **候选纪律**:送用户裁决必须 ≥2 个整页候选(`make_variants.py` 合成对比页);单方案不得送审,脚本退出码把关。
+6. **裁决回写**(学习机制):用户每次接受/否决,必须落 `profile.json`(机读,match/score/lint 自动消费)与 `critique.md` 尸检(可迁移失败模式)——不回写=本轮白干,skill 永远不长。
 
 ## 六步法
 
@@ -81,7 +82,7 @@ python "$S" card --palette ... --name "项目名" --out card.html   # 色块卡+
 python "$S/lint_page.py" page.html --palette <声明色板> --floor 12   # 色板漂移/黑名单/字号下限/渐变与emoji剂量
 ```
 
-闸门链:`score`(色板+档案)→ build → `lint_page`(HTML 纪律)→ 截图五镜(渲染证据)。用户否决时先做**尸检**(可迁移失败模式写回 critique.md)再重设计——偏好是输入,方法是资产。正式交付物再走既有 visual-judge 闸门。
+闸门链:`score`(色板+档案)→ build → `lint_page`(HTML 纪律)→ `render_probe.js`(浏览器 evaluate 采集渲染证据,存 evidence.json 后 `lint_page --render` 消费)→ `make_variants`(≥2 候选对比页)→ 截图五镜(视线顺序/密度/构图)。用户否决时先做**尸检**(可迁移失败模式写回 critique.md)再重设计——偏好是输入,方法是资产。正式交付物再走既有 visual-judge 闸门。
 
 ## 配色库是怎么选出来的(选板方法论)
 

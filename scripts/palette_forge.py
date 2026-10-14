@@ -560,6 +560,45 @@ def cmd_search(args):
         print(f"           {' '.join(p['hexes'])}")
 
 
+def cmd_house(args):
+    """已验收设计入库(origin=house):用户的接受裁决=最强味信号,直接进库参与 match。"""
+    hexes = [h.upper() for h in palette_list(args.hexes)]
+    assert 3 <= len(hexes) <= 10, "3-10 色"
+    with open(LIBRARY, encoding="utf-8") as f:
+        lib = json.load(f)
+    key = "#".join(sorted(hexes))
+    if any("#".join(sorted(p["hexes"])) == key for p in lib["palettes"]):
+        print("已存在同色组合,跳过")
+        return
+    hues, lights, sats = [], [], []
+    for h in hexes:
+        hh, ll, ss = hsl(h)
+        hues.append(hh); lights.append(ll); sats.append(ss)
+    mean_l = sum(lights) / len(lights)
+    mean_s = sum(sats) / len(sats)
+    tags = ["warm" if sum(1 for x in hues if x >= 310 or x < 70) >= len(hues) / 2 else "cool"]
+    tags.append("dark" if mean_l < 0.35 else "light" if mean_l > 0.65 else "mid")
+    if mean_s < 0.40 and mean_l > 0.60: tags.append("pastel")
+    if mean_s > 0.55: tags.append("vivid")
+    best = max(contrast_ratio(a, b) for i, a in enumerate(hexes) for b in hexes[i+1:])
+    lib["palettes"].insert(0, {
+        "name": args.name, "hexes": hexes, "text_hint": [], "likes": 0, "tier": 3,
+        "origin": "house", "computed_styles": sorted(set(tags)),
+        "occurrences": 1, "flags": [],
+        "metrics": {"lightness_span": round(max(lights) - min(lights), 3),
+                    "max_contrast": round(best, 2), "cb_min_separation": None},
+        "sources": [f"house:{args.from_proj or 'user_accepted'}"],
+    })
+    lib["_meta"]["counts"]["kept"] = len(lib["palettes"])
+    json.dump(lib, open(LIBRARY, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    prof = load_profile()
+    prof.setdefault("loved_palette_ids", [])
+    if args.name not in prof["loved_palette_ids"]:
+        prof["loved_palette_ids"].append(args.name)
+        json.dump(prof, open(PROFILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"house 入库: {args.name} [{' '.join(sorted(set(tags)))}] (loved+1, match 自动加权)")
+
+
 BRIEF_KEYWORDS = {
     # 词 → 语域。机械映射,不靠临场发挥;新领域=加词条,不是加散文。
     "medical_teaching": ["教学", "临床", "查房", "医学", "医疗", "指南", "解读", "儿科", "病例", "文献", "患教"],
@@ -756,6 +795,12 @@ def main():
     s.add_argument("--no-flags", action="store_true", help="exclude palettes carrying any gate flag")
     s.add_argument("--limit", type=int, default=8)
     s.set_defaults(fn=cmd_search)
+
+    s = sub.add_parser("house")
+    s.add_argument("--name", required=True)
+    s.add_argument("--hexes", required=True)
+    s.add_argument("--from-proj", default=None, help="来源项目名")
+    s.set_defaults(fn=cmd_house)
 
     s = sub.add_parser("match")
     s.add_argument("--brief", required=True, help="需求自然语言,如:儿科教学页/母婴封面/文献解读课件")

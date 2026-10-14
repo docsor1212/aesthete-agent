@@ -4,7 +4,7 @@
   "description": "Curated palettes harvested live from coolors.co official order pages (trending/popular/latest, 48 each; style-filter URLs proved to be SEO fallback clones of popular — do not use). tier = crowd signal (3>=50K likes, 2>=20K, 1>0, 0 new/unranked); occurrences = cross-page recurrence; computed_styles from HSL stats; flags from objective gates (CB-COLLISION-RISK / SLOP-SIGNATURE / NARROW-LIGHTNESS). Gates reject only broken architecture, never judge beauty — final judgment happens in context at use time.",
   "harvested": "2026-10-15",
   "counts": {
-   "kept": 87,
+   "kept": 89,
    "rejected": 29
   },
   "style_vocab": [
@@ -21,6 +21,63 @@
   ]
  },
  "palettes": [
+  {
+   "name": "GLM黄蓝(glm-deck定案)",
+   "hexes": [
+    "70A0D0",
+    "2B5C8F",
+    "D79D55",
+    "9C6B2A",
+    "F7F4EC"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.582,
+    "max_contrast": 6.31,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:glm-deck"
+   ]
+  },
+  {
+   "name": "Bees&Honey(IEI系列定案)",
+   "hexes": [
+    "FFA69E",
+    "FAF3DD",
+    "B8F2E6",
+    "AED9E0",
+    "5E6472"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "light",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.516,
+    "max_contrast": 5.34,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:iei-cover"
+   ]
+  },
   {
    "name": "Sunny Beach Day",
    "hexes": [
