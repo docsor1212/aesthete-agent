@@ -1,5 +1,4 @@
 {
- "_comment": "用户偏好档案——被 search/match/score/lint_page 机械消费。每次用户裁决(接受/否决)都必须落一条到这里或 necropsies,这是 skill 的学习机制,不是文档。",
  "version": 1,
  "updated": "2026-10-15",
  "registers": {
@@ -31,7 +30,7 @@
  "default_register": "medical_teaching",
  "theme_bias": {
   "dark_penalty": 3,
-  "reason": "尸检#1:深色底在本用户语域=瞎搞(2026-10-15 强裁决);除非 brief 明示,一律浅底"
+  "reason": "本用户默认语域为浅底 daylight;深色需 brief 明示"
  },
  "banned_hex_families": {
   "tailwind_defaults": [
@@ -69,5 +68,9 @@
     "剂量失控"
    ]
   }
- ]
+ ],
+ "release_cadence": {
+  "rule": "开发完成后等定时窗口发布;发布前必过冷却检查;同日不多版本连发",
+  "window": "12:00"
+ }
 }

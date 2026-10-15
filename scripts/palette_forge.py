@@ -4,7 +4,7 @@
 
 Commands:
   harmony   generate a palette from a seed color using a harmony rule (OKLCH)
-  mutate    coolors-style adjust transforms (shade/saturation/hue/temperature/luminance)
+  mutate    classic adjust transforms (shade/saturation/hue/temperature/luminance)
   contrast  WCAG contrast ratio + AA/AAA verdict for fg/bg pair
   roles     assign 60-30-10 role architecture + emit CSS variables
   blind     color-blindness simulation (protanopia/deuteranopia/tritanopia)
@@ -324,7 +324,7 @@ def cmd_roles(args):
     if surface:
         roles["surface"] = surface[1]
     if args.semantic:
-        # semantic states derived from the accent hue (impeccable "roles, not swatch bags"):
+        # semantic states derived from the accent hue (角色,不是色块袋):
         # success/warning/error/info keep the accent's lightness & chroma character
         L, C, H = oklch_from_hex(accent[1])
         C = max(C, 0.10)
@@ -359,7 +359,7 @@ def cmd_roles(args):
 
 def cmd_ramp(args):
     """OKLCH lightness ramp from a base hue — chroma falls off near white/black
-    (impeccable ramp rule: don't keep high chroma at extreme lightness)."""
+    (端点降饱和法则:不为数学均匀在极端明度硬保高 chroma)。"""
     L, C, H = oklch_from_hex(args.base)
     C = max(C, 0.08)
     out = []
@@ -452,7 +452,7 @@ def cmd_score(args):
 
 
 def cmd_showcase(args):
-    """Contact sheet of library candidates for user selection (theme-factory pattern)."""
+    """Contact sheet of library candidates for user selection (样张点名)."""
     with open(LIBRARY, encoding="utf-8") as f:
         lib = json.load(f)
     pals = lib["palettes"]
@@ -513,8 +513,10 @@ def cmd_blind(args):
 
 
 def cmd_slop(args):
-    for f in slop_lint(palette_list(args.palette)):
+    findings = slop_lint(palette_list(args.palette))
+    for f in findings:
         print(f)
+    sys.exit(0 if all(f.startswith("CLEAN") for f in findings) else 1)
 
 
 def cmd_extract(args):
@@ -523,7 +525,14 @@ def cmd_extract(args):
     except ImportError:
         print("Pillow required: pip install pillow", file=sys.stderr)
         sys.exit(2)
-    img = Image.open(args.image).convert("RGB")
+    if not os.path.exists(args.image):
+        print(f"文件不存在: {args.image}", file=sys.stderr)
+        sys.exit(2)
+    try:
+        img = Image.open(args.image).convert("RGB")
+    except Exception as e:
+        print(f"无法打开图像({e}): 仅支持常见位图格式", file=sys.stderr)
+        sys.exit(2)
     img.thumbnail((200, 200))
     q = img.quantize(colors=args.n, method=Image.Quantize.MEDIANCUT).convert("RGB")
     counts = sorted(q.getcolors(img.width * img.height) or [], reverse=True)
@@ -597,6 +606,28 @@ def cmd_house(args):
         prof["loved_palette_ids"].append(args.name)
         json.dump(prof, open(PROFILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"house 入库: {args.name} [{' '.join(sorted(set(tags)))}] (loved+1, match 自动加权)")
+
+
+def cmd_selftest(args):
+    """机器金标:WCAG 边界/OKLCH 往返/slop 签名/对比函数。非零退出 = 引擎不可信。"""
+    ok, fail = [], []
+    def check(name, cond):
+        (ok if cond else fail).append(name)
+        print(("PASS  " if cond else "FAIL  ") + name)
+    check("wcag边界-过(#767676/FFF=4.54)", 4.53 < contrast_ratio("767676", "FFFFFF") < 4.55)
+    check("wcag边界-不过(#777777/FFF=4.48)", 4.47 < contrast_ratio("777777", "FFFFFF") < 4.49)
+    check("wcag阈值方向", contrast_ratio("767676", "FFFFFF") > contrast_ratio("777777", "FFFFFF"))
+    h = "2A9D8F"
+    L1, C1, H1 = oklch_from_hex(h)
+    check("oklch往返(L误差<0.003)", abs(oklch_from_hex(hex_from_oklch(L1, C1, H1))[0] - L1) < 0.003)
+    check("oklch往返(色相误差<0.5deg)", abs((oklch_from_hex(hex_from_oklch(L1, C1, H1))[2] - H1 + 180) % 360 - 180) < 0.5)
+    check("slop签名-tailwind", any("MEDIAN-TRAP" in f for f in slop_lint(["3B82F6", "8B5CF6", "EC4899", "6366F1", "A855F7"])))
+    check("slop签名-干净板", all(f.startswith("CLEAN") for f in slop_lint(["264653", "2A9D8F", "E9C46A", "F4A261", "E76F51"])))
+    check("自动文字-深底选白", readable_text("000814") == "FFFFFF")
+    check("自动文字-浅底选黑", readable_text("FEFAE0") == "000000")
+    check("色盲矩阵-有输出", len(simulate_cb("FF0000", "deuteranopia")) == 6)
+    print(f"\n{len(ok)} PASS / {len(fail)} FAIL")
+    sys.exit(0 if not fail else 1)
 
 
 BRIEF_KEYWORDS = {
@@ -681,7 +712,7 @@ def cmd_card(args):
   <div style="max-width:860px;margin:0 auto;padding:28px">
     <div style="display:flex;justify-content:space-between;align-items:baseline">
       <h1 style="font:700 22px system-ui;margin:0 0 14px">{name}</h1>
-      <span style="font:500 13px system-ui;color:#888">palette-forge card</span>
+      <span style="font:500 13px system-ui;color:#888">aesthete-agent card</span>
     </div>
     <div style="display:flex;border-radius:10px;overflow:hidden;border:1px solid #eee">
       {''.join(swatches)}
@@ -795,6 +826,9 @@ def main():
     s.add_argument("--no-flags", action="store_true", help="exclude palettes carrying any gate flag")
     s.add_argument("--limit", type=int, default=8)
     s.set_defaults(fn=cmd_search)
+
+    s = sub.add_parser("selftest")
+    s.set_defaults(fn=cmd_selftest)
 
     s = sub.add_parser("house")
     s.add_argument("--name", required=True)

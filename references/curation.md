@@ -1,3 +1,7 @@
+> 何时读我:理解选板方法论、要扩充调色板库时。
+> 最短路径:三层过滤→扩库流水线→已知边界。
+> 回 INDEX:SKILL.md「参考文档(30 秒路由)」。
+
 # 选板方法论与扩库流水线
 
 ## 核心问题:你怎么知道哪些配色好看?
@@ -12,7 +16,7 @@
 
 ### 第 2 层:客观质量门(机器只拦"坏",不判"好")
 
-流水线(`coolors-research/build_library_v2.py`)执行的确定性检查:
+流水线(`scripts/build_library.py`,随包发布)执行的确定性检查:
 
 | 门 | 规则 | 处置 | 理由 |
 |---|---|---|---|
@@ -34,7 +38,7 @@
 # 1. 收割(浏览器配方见 harvest-coolors.md):保存到 coolors-research/
 #    命名:coolors_trending_raw.json / coolors_popular2_raw.json / coolors_latest_raw.json
 # 2. 重建库(去重+质量门+分层,写入 skill 的 palettes/palettes.json):
-python coolors-research/build_library_v2.py
+python scripts/build_library.py --raw <收割目录> --out <库文件>
 # 3. 检查输出:kept/rejected 比例、flag 数、覆盖率——拒绝率骤降或 flag 全零都说明门坏了
 ```
 
