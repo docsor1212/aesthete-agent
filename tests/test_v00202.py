@@ -7,15 +7,16 @@ ROOT = os.path.join(HERE, "..")
 ENGINE = os.path.join(ROOT, "scripts", "palette_forge.py")
 LINT = os.path.join(ROOT, "scripts", "lint_page.py")
 SKILL = os.path.join(ROOT, "SKILL.md")
+SKILL_ZH = os.path.join(ROOT, "SKILL_ZH.md")
 PALETTE = "F4F1DE,E07A5F,3D405B,81B29A,F2CC8F"
 
 def run(args, **kw):
     return subprocess.run([sys.executable] + args, capture_output=True, text=True,
                           encoding="utf-8", errors="replace", **kw)
 
-class TestDesc(unittest.TestCase):
+class TestDescZH(unittest.TestCase):
     def setUp(self):
-        self.fm = open(SKILL, encoding="utf-8").read().split("---")[1]
+        self.fm = open(SKILL_ZH, encoding="utf-8").read().split("---")[1]
         self.desc = re.search(r"description: (.*)", self.fm).group(1)
     def test_len_le_1024(self):
         self.assertLessEqual(len(self.desc), 1024)
@@ -29,8 +30,29 @@ class TestDesc(unittest.TestCase):
         self.assertIn("Skip when:", self.desc)
         for w in ("翻译", "润色"):
             self.assertIn(w, self.desc.split("Skip when:")[1])
-    def test_version_frontmatter(self):
-        self.assertIn("version: 0.2.2", self.fm)
+    def test_version_not_decreased(self):
+        v = float(re.search(r"version: ([\d.]+)", self.fm).group(1).rsplit(".", 1)[0].replace(".", ""))
+        self.assertGreaterEqual(v, 2.2, "版本只增不减")
+
+class TestDescEN(unittest.TestCase):
+    def setUp(self):
+        self.fm = open(SKILL, encoding="utf-8").read().split("---")[1]
+        self.desc = re.search(r"description: (.*)", self.fm).group(1)
+    def test_len_le_1024(self):
+        self.assertLessEqual(len(self.desc), 1024)
+    def test_demand_words_in_first_120(self):
+        head = self.desc[:120]
+        for w in ("Color palette generation", "frontend aesthetics", "UI color schemes"):
+            self.assertIn(w, head, f"demand word {w} not in first 120 chars")
+    def test_brand_not_in_first_60(self):
+        self.assertNotIn("Aesthete", self.desc[:60], "brand word must not appear in first 60 chars")
+    def test_skip_when_present(self):
+        self.assertIn("Skip when:", self.desc)
+    def test_body_english_anchors(self):
+        s = open(SKILL, encoding="utf-8").read()
+        self.assertIn("Capability × Boundary Quick Reference", s)
+        self.assertIn("30-second routing", s)
+        self.assertNotIn("配色生成、调色板方案", s.split("---")[2][:500], "英文主文件正文不得残留中文版 desc")
 
 class TestEngine(unittest.TestCase):
     def test_wcag_boundaries(self):
@@ -69,11 +91,11 @@ class TestLint(unittest.TestCase):
 
 class TestCapabilityBoundaryDoc(unittest.TestCase):
     def test_table_present(self):
-        s = open(SKILL, encoding="utf-8").read()
+        s = open(SKILL_ZH, encoding="utf-8").read()
         self.assertIn("能力×边界速查", s)
         self.assertIn("非目标", s)
     def test_routing_table_present(self):
-        s = open(SKILL, encoding="utf-8").read()
+        s = open(SKILL_ZH, encoding="utf-8").read()
         self.assertIn("30 秒路由", s)
 
 if __name__ == "__main__":

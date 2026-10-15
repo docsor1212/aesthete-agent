@@ -1,138 +1,142 @@
 ---
-version: 0.2.2
+version: 0.3.0
 name: aesthete-agent
-description: 配色生成、调色板方案、前端美学:为 UI/HTML、SVG 幻灯片、视频封面、图表、海报输出机械验证过的颜色方案。87 板实证库按语域自动匹配,OKLCH 谐和生成、明度阶梯、图像取色;60-30-10 角色化含语义色;五维评分卡、WCAG 对比度、色盲模拟、AI-slop 检测四重机械验证;card 上下文预览+五镜自审;偏好学习档案随你的每次裁决进化。纯标准库离线可用。Skip when:纯文字排版、翻译润色、文案写作、与配色和前端美学无关的任务。Aesthete Agent。触发词:配色、调色板、配色方案、颜色搭配、前端美学、UI配色、设计美学、color palette、color scheme、WCAG、色盲、视觉审美、aesthete-agent。
+description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 87-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when: pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words: color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
 ---
 
-# aesthete-agent — 前端美学引擎
+# aesthete-agent — Frontend Aesthetics Engine
 
-大模型配色差的根因:模型把 hex 当文本操作、输出训练数据中位数(前端教程的中位数是紫/靛蓝)、无法真正"看见"颜色。修法不是换模型,而是**把品味外包给流程**:哲学先行、角色化、机械验证、上下文自审。
+Why LLM color output is bad, with evidence: models treat hex codes as text, regress to the median of training data (the frontend-tutorial median is purple/indigo), and cannot actually see color. The fix is not a better model — it is **outsourcing taste to process**: manifesto first, role mapping, mechanical validation, in-context self-review.
 
-⛔ 铁律:
-1. **禁止裸写配色**。任何设计任务的配色必须走六步法,第 6 步(五镜自审)不可跳过。
-2. **禁止运行时访问 coolors.co**——无公开 API,直连被 Cloudflare 403;数据已离线内置。
-3. **Brief 即法律**:用户/上游指定的颜色与美学方向是绑定约束,本 skill 围绕它服务。已有品牌色系的既有交付不属本 skill 改配对象。
-4. **有界验证**:完整做完→一轮批量自审→一轮批量修复→最多再确认一次→**停止打磨**。
-5. **候选纪律**:送用户裁决必须 ≥2 个整页候选(`make_variants.py` 合成对比页);单方案不得送审。
-6. **裁决回写**:用户每次接受/否决,落 `profile.json`(机读)与 `critique.md` 尸检(失败模式)——不回写 = skill 不长。
+⛔ Iron rules:
+1. **No bare palette writing.** Every color task goes through the six-step method; step 6 (five-lens review) is not skippable.
+2. **No runtime access to coolors.co** — no public API, direct connections hit Cloudflare 403; all data ships offline.
+3. **The brief is law**: colors and aesthetics pinned by the user are binding constraints. Already-shipped brand systems are out of scope for re-paletteing.
+4. **Bounded verification**: build fully → one batched review → one batched fix round → at most one more confirmation → **stop polishing**.
+5. **Candidate discipline**: user verdicts require ≥2 full-page candidates (`make_variants.py` builds the comparison sheet); a single proposal is not sent for review.
+6. **Verdict write-back**: every accept/reject lands in `profile.json` (machine-read) and `critique.md` necropsies (failure modes) — no write-back, no growth.
 
-## 能力×边界速查
+## Capability × Boundary Quick Reference
 
-| 能力 | 做到 | 不做到 | 深入 |
+| Capability | Does | Does not | Deep dive |
 |---|---|---|---|
-| 选库 match/search | 按语域+点赞分层+客观门从 87 板实证库排序 | 不判"主观好看"——最终裁决在上下文自审 | curation.md |
-| 生成 harmony / ramp / mutate | OKLCH 谐和/明度阶梯/感知等量变换,自动 gamut 收缩 | 不做插图/渐变图导出 | color-theory.md |
-| 取色 extract | 从参考图提取主色+占比+文字色建议 | 不做图像重绘/抠图 | — |
-| 角色 roles | bg/text/accent/primary/surface+语义色,附对比度检查 | 不替代排版系统与字体选型 | craft-rules.md |
-| 验证 score/contrast/blind | 五维评分卡、WCAG 边界值、色盲三模拟,失败给修复建议 | 不判审美;对比度是必要非充分条件 | color-theory.md |
-| 反模式 slop + lint_page | 中位数陷阱/紫渐变/平坦明度检出;HTML 交付审计 | 不覆盖所有审美失败模式——五镜截图补位 | anti-slop.md |
-| 预览 card / showcase / make_variants | 色板卡+mockup;样张点名;≥2 候选对比页 | 不替代真实环境冒烟测试 | critique.md |
-| 学习 house + profile.json | 已验收设计入库;偏好(深浅/黑名单/语域)机读生效 | 学习档案即配置文件,改法见"裁决回写"节 | curation.md |
+| Library match/search | Rank an 87-palette evidence library by register + likes tiers + objective gates | Does not judge "subjective beauty" — final verdict is in-context | curation.md |
+| Generate harmony / ramp / mutate | OKLCH harmony, luminance ramps, perceptual transforms with auto gamut fit | No illustration or gradient-image export | color-theory.md |
+| Extract | Pull dominant colors + shares + readable-text hints from a reference image | No image redraw or matting | — |
+| Roles | bg/text/accent/primary/surface + semantic colors, with contrast checks | Not a layout or type-selection system | craft-rules.md |
+| Validate score/contrast/blind | 5-dim scorecard, exact WCAG boundaries, three color-blind simulations, fix suggestions on failure | Does not judge taste; contrast is necessary, not sufficient | color-theory.md |
+| Anti-pattern slop + lint_page | Median-trap/purple-gradient/flat-lightness detection; HTML delivery audit | Does not cover every aesthetic failure — five-lens screenshots fill the gap | anti-slop.md |
+| Preview card / showcase / make_variants | Palette cards + mockups; named showcase picks; ≥2-candidate comparison | Not a substitute for a real-environment smoke test | critique.md |
+| Visualizer scenes + SVG recolor | 6 realistic scenes (mobile app / landing / dashboard / branding / typography / pattern) with derived roles + legibility gates; SVG recolor keeps pure black/white | Scene mockups are decision aids, not production UI | critique.md |
+| Learn house + profile.json | Accepted designs join the corpus; preferences (theme/bans/registers) apply mechanically | The learning file IS the config file — see "Verdict write-back" section | curation.md |
 
-**非目标**:排版系统、图像资产生成、印刷 CMYK 色域、字体选型——本 skill 只管颜色决策与验证。
+**Non-goals**: layout systems, image asset generation, print CMYK gamut, typeface selection — this skill only decides and validates color.
 
-## 六步法
+## Six-Step Method
 
-命令变量(先设一次):`SDIR="<本 skill 目录绝对路径>"`,`S="$SDIR/scripts/palette_forge.py"`。
+Command variables (set once): `SDIR="<absolute path to this skill dir>"`, `S="$SDIR/scripts/palette_forge.py"`.
 
-### 第 1 步:命名美学宣言
+### Step 1: Name the aesthetic manifesto
 
-起一个 **1-2 词的运动名** + 一句话宣言:"药圃手账——陶罐褐、晒干草本绿、桑皮纸米黄,低饱和,像被时间晒过"。宣言包含:
-- **语域判定**(镜 0):给谁看/什么场景看/3 秒带走什么;视觉语域与内容领域同域。**用户既有审美档案(如素雅/浅底/留白/大幽灵数字)是最高优先约束,先查再写;隐喻契合救不了语域错配**;
-- **参照美学**:"1970s 滑雪小屋:焦橙、牛油果绿、暖棕";
-- **明暗架构**:浅底还是深底;文字永远最深/最浅;
-- **色彩剂量**:点缀色全页占比 ≤10%,"稀缺即力量";
-- **否定清单**:从 `references/anti-slop.md` 挑适用项写进 prompt(推理期否定有效);
-- 60-30-10 是**默认脚手架,不是法律**——比例追随 brief。
+Pick a **1-2 word movement name** + a one-line manifesto: "Herb garden ledger — pot brown, dried-herb green, mulberry-paper cream, all low saturation, sun-bleached". The manifesto includes:
+- **Register check** (lens 0): who reads it / in what setting / what they take away in 3 seconds; visual register must match the content domain. **The user's existing aesthetic profile (e.g. light/understated/whitespace/ghost numerals) is the highest-priority constraint — check before writing; a fitting metaphor cannot rescue a register mismatch**;
+- **Reference aesthetics**: "1970s ski lodge: burnt orange, avocado green, warm brown";
+- **Lightness architecture**: light or dark ground; text is always the extreme;
+- **Color dosage**: accent ≤10% of the page — "scarcity is force";
+- **Negation list**: pick applicable items from `references/anti-slop.md` into the prompt (inference-time negation works);
+- 60-30-10 is a **default scaffold, not law** — proportions follow the brief.
 
-### 第 2 步:选来源(四条路)
+### Step 2: Source (four routes)
 
 ```bash
-python "$S" match --brief "儿科临床教学页" --limit 6     # A' brief匹配:自动判语域+档案降权(首选)
-python "$S" search --style warm,pastel --no-flags --limit 6   # A 手动过滤
-python "$S" harmony --base 780000 --mode complementary --theme light  # B OKLCH 谐和
-python "$S" extract reference.png --n 6                  # C 图像取色(需 Pillow)
-python "$S" ramp --base 2A9D8F --steps 7                 # D 明度阶梯(图表/热图)
+python "$S" match --brief "pediatric clinical teaching page" --limit 6   # A' brief match: auto register + profile down-rank (preferred)
+python "$S" search --style warm,pastel --no-flags --limit 6   # A manual filter
+python "$S" harmony --base 780000 --mode complementary --theme light  # B OKLCH harmony
+python "$S" extract reference.png --n 6                  # C image extraction (needs Pillow)
+python "$S" ramp --base 2A9D8F --steps 7                 # D luminance ramp (charts/heatmaps)
 ```
 
-A'=自然语言 brief → 语域判定+档案降权+分层排序,**新任务首选**。**空格键迭代的等价物**:换 seed/mode/风格词重掷,生成 ≥2 个候选再往下走。候选多时 `showcase` 出样张点名。
+A' = natural-language brief → register detection + profile down-rank + tier ranking, **the preferred entry for new tasks**. **The spacebar-iteration equivalent**: re-roll seeds/modes/style words; generate ≥2 candidates before moving on. Many candidates → `showcase` renders named picks.
 
-### 第 3 步:角色化,不是色块袋
+### Step 3: Roles, not a bag of swatches
 
 ```bash
 python "$S" roles --palette 606C38,283618,FEFAE0,DDA15E,BC6C25 --semantic --css
 ```
 
-输出 bg/text/accent/primary/surface + 派生语义色(success/warning/error/info),附三组对比度检查,不过关非零退出。要点:最强的色**拥有一块完整区域**,不撒成碎点缀。
+Outputs bg/text/accent/primary/surface + derived semantic colors (success/warning/error/info), with three contrast checks — non-zero exit on failure. Key point: the strongest color **owns one deliberate region**, not scattered accents.
 
-### 第 4 步:机械验证(可测量与品味分离)
+### Step 4: Mechanical validation (measurement vs taste, separated)
 
 ```bash
-python "$S" score --palette ...     # 五维评分卡 /20,P0-P3 发现,<10 分非零退出
-python "$S" contrast --fg ... --bg ... [--large]   # 单对核查,失败给修复建议
-python "$S" blind --palette ...     # 色盲三模拟;图表/状态色必查
-python "$S" slop --palette ...      # AI-slop 签名检出,命中即非零退出
+python "$S" score --palette ...     # 5-dim scorecard /20, P0-P3 findings, <10 exits non-zero
+python "$S" contrast --fg ... --bg ... [--large]   # single-pair check with fix suggestions
+python "$S" blind --palette ...     # three color-blind simulations; mandatory for charts/status colors
+python "$S" slop --palette ...      # AI-slop signatures; non-zero exit on hit
 ```
 
-图表另加:只用明度阶梯区分数据(ramp),形状/标注冗余编码,红绿永不作唯一区分。
+Charts additionally: distinguish data by luminance ramps only (ramp), redundant encoding via shape/labels, never red+green as the sole distinction.
 
-### 第 5 步:导出 token
+### Step 5: Export tokens
 
 ```bash
-python "$S" export --palette ... --format css|tailwind|json|svg
+python "$S" export --palette ... --format css|tailwind|json|svg|w3c|context   # w3c=设计令牌标准;context=LLM 上下文块
 python "$S" mutate --palette ... --shade -20 --sat +5 --hue 15 --temp +30
 ```
 
-### 第 6 步:五镜自审(强制闸门)
+### Step 6: Five-lens self-review (mandatory gate)
 
 ```bash
-python "$S" card --palette ... --name "项目名" --out card.html   # 色板卡+mockup
-python "$SDIR/scripts/lint_page.py" page.html --palette <声明色板> --floor 12   # 交付审计
+python "$S" card --palette ... --name "Project" --out card.html   # palette card + mockup
+python "$S" visualize --palette ... --name "Project" --out viz.html   # 6-scene visualizer; --variants N = same scenes under N palette orders; --svg recolors keeping pure black/white
+python "$S" critique --palette ... [--evidence evidence.json] --out report.md   # 五镜报告生成器(机械发现预填)
+python "$S" doctor                                 # 环境体检
+python "$SDIR/scripts/lint_page.py" page.html --palette <declared palette> --floor 12   # delivery audit
 ```
 
-**必须**截图贴进对话,按 `references/critique.md` **五镜头**逐镜裁决(意图语域→构成→信息→色彩→文字):每条 PASS/FAIL 指向具体元素+引用原则+证据;FAIL 未修不交付;修复有界。HTML 交付前必跑 lint_page。
+**Always** screenshot into the conversation and adjudicate with the **five lenses** from `references/critique.md` (intent/register → composition → information → color → type): every PASS/FAIL points at a concrete element + cites a principle + evidence; FAIL unfixed = not delivered; fixes are bounded. Before HTML delivery run lint_page.
 
-闸门链:
+Gate chain:
 
-| 步骤 | 工具 | 把什么 |
+| Step | Tool | Guards |
 |---|---|---|
-| 1 色板 | `score` | 五维+档案违例 |
-| 2 构建 | 任意 | — |
-| 3 HTML 纪律 | `lint_page` | 漂移/黑名单/字号/剂量 |
-| 4 渲染证据 | `render_probe.js` + `lint_page --render` | 主题/剂量/对比/字号实测 |
-| 5 候选 | `make_variants` | ≥2 候选对比页 |
-| 6 五镜截图 | 人+agent | 视线顺序/密度/构图 |
+| 1 palette | `score` | 5 dims + profile violations |
+| 2 build | any | — |
+| 3 HTML discipline | `lint_page` | drift/bans/font floor/dosage |
+| 4 render evidence | `render_probe.js` + `lint_page --render` | measured theme/dosage/contrast/font |
+| 5 candidates | `make_variants` | ≥2-candidate comparison sheet |
+| 6 five-lens screenshots | human + agent | eye order/density/composition |
 
-渲染探针降级路径:无浏览器工具时跳过步骤 4,以截图五镜为最低门槛,并在交付说明中注明"渲染实测未跑"。
+Render-probe fallback: without browser tooling skip step 4, keep five-lens screenshots as the floor, and note "render evidence not run" in the delivery.
 
-用户否决时先做**尸检**(失败模式写回 critique.md)再重设计。正式交付按用户所在环境的验收流程执行。
+On user rejection, run a **necropsy** first (write the transferable failure mode back to critique.md), then redesign. Formal deliverables follow the host environment's acceptance flow.
 
-## 裁决回写与自定义
+## Verdict write-back & customization
 
-- **已验收设计入库**:`python "$S" house --name "项目定稿" --hexes ... --from-proj 项目名` —— 进库并自动加权,match 优先推荐。
-- **自定义语域**:编辑 `profile.json` 的 `registers`(键=语域名,值含 theme/style_tags/accent_max_area),`match --register` 即可用;新领域 = 加词条,不是改代码。
-- **自检**:`python "$S" selftest` —— WCAG 边界值/OKLCH 往返/slop 签名全量自检,非零退出 = 引擎不可信。
+- **Accepted-design intake**: `python "$S" house --name "Project final" --hexes ... --from-proj project` — joins the library and gets match-boosted.
+- **Custom registers**: edit `registers` in `profile.json` (key = register name, value with theme/style_tags/accent_max_area); `match --register` picks it up. A new domain = a new entry, not new code.
+- **Self-test**: `python "$S" selftest` — WCAG boundaries/OKLCH round-trip/slop signatures; non-zero exit = engine untrustworthy.
 
-## 参考文档(30 秒路由)
+## Reference docs (30-second routing)
 
-| 任务 | 去哪 |
+| Task | Go to |
 |---|---|
-| 写否定清单/识别 AI 味 | anti-slop.md(黑名单表+模板) |
-| 自审一张页面 | critique.md(五镜+裁决输出格式) |
-| 查谐和规则/对比度公式/色彩语义 | color-theory.md |
-| 快速找某条法则 | craft-rules.md(法则卡) |
-| 扩库/理解选板方法论 | curation.md |
-| 再收割 coolors 数据 | harvest-coolors.md(含 5 个实测坑) |
+| Write negation lists / spot AI-slop | anti-slop.md (ban table + template) |
+| Review a rendered page | critique.md (five lenses + verdict format) |
+| Harmony rules / contrast formulas / color semantics | color-theory.md |
+| Find a named rule fast | craft-rules.md (rule cards) |
+| Grow the library / selection methodology | curation.md |
+| Harvest more coolors data | harvest-coolors.md (5 field-tested traps) |
 
-| 文件 | 内容 |
+| File | Content |
 |---|---|
-| `references/critique.md` | 五镜头审核法+命名失败模式+尸检档案 |
-| `references/craft-rules.md` | 配色法则卡(五镜审核的速查面) |
-| `references/color-theory.md` | 谐和规则/OKLCH/明度架构/60-30-10/WCAG 公式/色彩语义 |
-| `references/anti-slop.md` | AI-slop 黑名单与证据链 |
-| `references/curation.md` | 选板方法论细则+扩库流水线 |
-| `references/harvest-coolors.md` | coolors 数据收割配方(5 个实测坑) |
+| `references/critique.md` | Five-lens review + named failure modes + necropsy archive |
+| `references/craft-rules.md` | Palette rule cards (five-lens quick reference) |
+| `references/color-theory.md` | Harmony rules/OKLCH/lightness architecture/60-30-10/WCAG formulas/semantics |
+| `references/anti-slop.md` | AI-slop bans and evidence chain |
+| `references/curation.md` | Selection methodology + library-growth pipeline |
+| `references/harvest-coolors.md` | coolors harvesting recipe (5 field-tested traps) |
 
-## 选板方法论
+## Selection methodology
 
-三层过滤:①人群信号(coolors 官方榜单+点赞分层+跨页重复)②客观质量门(只拦客观坏:平坦明度/无可读对拒;色盲碰撞/slop 打旗)③使用时上下文自审(最终裁决)。**没有人能先验知道"好看"**——库负责起跑线,裁决在上下文。细则见 `references/curation.md`。
+Three filters: ① crowd signal (official coolors charts + likes tiers + cross-page recurrence) ② objective gates (reject only objectively broken: flat lightness / no readable pair; flag CB collisions / slop / narrow lightness) ③ in-context self-review (the final verdict). **Nobody can know "beautiful" a priori** — the library sets the starting line, the context decides. Details in `references/curation.md`.

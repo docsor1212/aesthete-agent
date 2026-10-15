@@ -1,0 +1,22 @@
+[project]
+name = "aesthete-agent-mcp"
+version = "0.3.0"
+description = "aesthete-agent MCP server — mechanically validated frontend aesthetics: palette library ranking, OKLCH generation, WCAG/APCA contrast, color-blind-safe data colors, theme packs, token exports (w3c/context); zero keys, zero telemetry"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "SorSor" }]
+keywords = ["mcp", "color", "palette", "design", "aesthetics", "wcag", "apca", "accessibility", "design-tokens"]
+dependencies = ["fastmcp>=2.0"]
+
+[project.scripts]
+aesthete-agent-mcp = "server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# 单模块布局:server.py 在 mcp/ 根,作为顶级模块安装;引擎 scripts/palette_forge.py
+# 由 server.py 以相对路径子进程调用(skill 安装树内),不重复打包。
+include = ["server.py"]

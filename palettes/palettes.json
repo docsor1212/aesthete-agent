@@ -4,7 +4,7 @@
   "description": "Curated palettes harvested live from coolors.co official order pages (trending/popular/latest, 48 each; style-filter URLs proved to be SEO fallback clones of popular — do not use). tier = crowd signal (3>=50K likes, 2>=20K, 1>0, 0 new/unranked); occurrences = cross-page recurrence; computed_styles from HSL stats; flags from objective gates (CB-COLLISION-RISK / SLOP-SIGNATURE / NARROW-LIGHTNESS). Gates reject only broken architecture, never judge beauty — final judgment happens in context at use time.",
   "harvested": "2026-10-15",
   "counts": {
-   "kept": 89,
+   "kept": 97,
    "rejected": 29
   },
   "style_vocab": [
@@ -21,6 +21,235 @@
   ]
  },
  "palettes": [
+  {
+   "name": "001",
+   "hexes": [
+    "EDAE49",
+    "D1495B",
+    "00798C",
+    "30638E",
+    "003D5B"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.429,
+    "max_contrast": 5.91,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "004",
+   "hexes": [
+    "E0BAD7",
+    "61D095",
+    "48BF84",
+    "439775",
+    "2A4747"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.582,
+    "max_contrast": 5.82,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "002",
+   "hexes": [
+    "EF6F6C",
+    "465775",
+    "56E39F",
+    "59C9A5",
+    "5B6C5D"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.314,
+    "max_contrast": 4.47,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "003",
+   "hexes": [
+    "FFBA49",
+    "20A39E",
+    "EF5B5B",
+    "23001E",
+    "A4A9AD"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.592,
+    "max_contrast": 11.35,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "007",
+   "hexes": [
+    "333333",
+    "48E5C2",
+    "FCFAF9",
+    "F3D3BD",
+    "5E5E5E"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.782,
+    "max_contrast": 12.14,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "011",
+   "hexes": [
+    "FFAC81",
+    "FF928B",
+    "FEC3A6",
+    "EFE9AE",
+    "CDEAC0"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.082,
+    "max_contrast": 1.74,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "15",
+   "hexes": [
+    "555B6E",
+    "89B0AE",
+    "BEE3DB",
+    "FAF9F9",
+    "FFD6BA"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "light",
+    "pastel"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.596,
+    "max_contrast": 6.43,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "12",
+   "hexes": [
+    "D8A47F",
+    "EF8354",
+    "EE4B6A",
+    "DF3B57",
+    "0F7173"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.418,
+    "max_contrast": 2.63,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
   {
    "name": "GLM黄蓝(glm-deck定案)",
    "hexes": [
