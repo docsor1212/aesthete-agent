@@ -6,7 +6,7 @@
   1. 色板漂移   — 页面实际使用的颜色 vs 声明色板(未声明的"私货色"逐个点名)
   2. 黑名单族   — profile.json 的 banned hex 家族(中位数陷阱)
   3. 字号下限   — CSS 中的 px 字号低于 --floor 即点名(投影件建议 24-34)
-  4. 渐变剂量   — linear-gradient 超过 --max-grad 计 P2(slop 签名之一)
+  4. 渐变剂量   — linear/radial/conic 渐变出现即 P0(审美铁律: 禁渐变, 纯色分层替代)
   5. emoji      — 出现 emoji 计 P2(除非品牌系统使用)
   6. --render evidence.json — 渲染级证据(render_probe.js 采集):主题 vs 档案、
      强调色剂量(areaRatio vs accent_max)、实测最小字号、最差对比对
@@ -55,7 +55,7 @@ def main():
     ap.add_argument("page")
     ap.add_argument("--palette", required=True, help="声明的色板,逗号分隔 hex")
     ap.add_argument("--floor", type=float, default=12, help="字号下限 px(投影件建议 24-34)")
-    ap.add_argument("--max-grad", type=int, default=3, help="linear-gradient 容量")
+    ap.add_argument("--max-grad", type=int, default=0, help="渐变容量(默认 0=禁渐变)")
     ap.add_argument("--render", default=None, help="render_probe.js 采集的 evidence.json")
     args = ap.parse_args()
 
@@ -98,9 +98,9 @@ def main():
         findings.append(("P1" if min(small) < args.floor * 0.7 else "P2",
                          f"字号低于下限 {args.floor}px: {sorted(set(small))}"))
 
-    grads = len(re.findall(r"linear-gradient|radial-gradient", html))
+    grads = len(re.findall(r"linear-gradient|radial-gradient|conic-gradient", html))
     if grads > args.max_grad:
-        findings.append(("P2", f"渐变出现 {grads} 次(>{args.max_grad})——渐变是 slop 高发签名"))
+        findings.append(("P0", f"禁渐变: 渐变出现 {grads} 次(>0)——一律用纯色分层替代, 渐变即不合格"))
 
     emojis = EMOJI_RE.findall(html)
     if emojis:

@@ -134,6 +134,13 @@ def palette_slop_impl(palette: str) -> str:
     return text
 
 
+def palette_report_impl(palette: str) -> str:
+    """One-shot acceptance artifact: contrast / color-blind / AI-slop / scorecard
+    gates aggregated into a single PASS/FAIL JSON. Exit code = verdict."""
+    ok, text = _call_engine(["report", "--palette", palette])
+    return text
+
+
 def palette_visualize_impl(palette: str, out: str = "visualizer.html", theme: str = "") -> str:
     """Render the palette into 6 realistic UI scenes (mobile, landing, dashboard,
     branding, typography, pattern) with derived roles and legibility gates;
@@ -160,6 +167,7 @@ if FastMCP is not None:
     _tool(palette_export_impl)
     _tool(palette_slop_impl)
     _tool(palette_visualize_impl)
+    _tool(palette_report_impl)
 
 
 
@@ -186,8 +194,10 @@ _STDIO_TOOLS = [
      {"palette": {"type": "string"}, "fmt": {"type": "string"}}, ["palette"]),
     ("palette_slop", "AI-slop signature detection (exit-code enforced)",
      {"palette": {"type": "string"}}, ["palette"]),
-    ("palette_visualize", "Render palette into 10 realistic UI scenes (+svg recolor)",
+    ("palette_visualize", "Render palette into 11 realistic UI scenes (+svg recolor)",
      {"palette": {"type": "string"}, "out": {"type": "string"}, "theme": {"type": "string"}}, ["palette"]),
+    ("palette_report", "One-shot acceptance artifact: 4 mechanical gates, PASS/FAIL",
+     {"palette": {"type": "string"}}, ["palette"]),
 ]
 
 
@@ -263,7 +273,7 @@ def main(argv=None):
     if a.check:
         ok, text = _call_engine(["selftest"])
         print("engine selftest:", "OK" if ok else "FAIL")
-        print("tools exposed:", 12 if FastMCP is not None else 0, "(fastmcp",
+        print("tools exposed:", 13 if FastMCP is not None else 0, "(fastmcp",
               "available)" if FastMCP is not None else "NOT installed — impl-only mode)")
         return 0 if ok else 1
     if FastMCP is None or a.stdio:

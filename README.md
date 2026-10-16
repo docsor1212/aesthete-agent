@@ -16,6 +16,25 @@ LLMs choose colors badly for measurable reasons: they treat hex codes as text, t
 - a **six-step method** (manifesto → register check → source → roles → validate → five-lens review) that turns "make it pretty" into a reproducible pipeline,
 - a **preference profile** (`profile.json`) that learns from every accept/reject verdict and mechanically down-ranks what the user rejects — e.g. dark grounds, banned hex families.
 
+## Screenshots
+
+**Light theme — 10 real UI scenes (Bees & Honey)**
+
+![light](docs/img/light-top.png)
+![light](docs/img/light-bottom.png)
+
+**Dark theme — brightened dark base (Olive Garden)**
+
+![dark](docs/img/dark-top.png)
+![dark](docs/img/dark-bottom.png)
+
+**Palette card (flat swatch strip, gradient-free)**
+
+![card](docs/img/card.png)
+
+Open `docs/demo/` for standalone HTML samples: [visualizer-light](docs/demo/visualizer-light.html) · [visualizer-dark](docs/demo/visualizer-dark.html) · [card](docs/demo/card.html)
+
+
 ## Install
 
 **Agent skills CLI** (Claude Code, ZCode, Codex, Cursor, Gemini CLI, and any `skills`-compatible agent):
@@ -54,10 +73,10 @@ Full method (manifesto → register → source → roles → validate → five-l
 
 | Area | Highlights |
 |---|---|
-| Engine (23 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind)/card/showcase/visualize/critique/doctor/selftest/house |
+| Engine (24 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house |
 | Evidence library | 89 palettes with likes tiers, computed style tags, gate flags, sources |
 | Theme packs | 8 named packs (colors + fonts + voice + use-when), all with dogfood provenance |
-| Quality gates | exit-code enforced: scorecard, contrast, blind collisions, slop, HTML lint, candidate discipline |
+| Quality gates | exit-code enforced: scorecard, contrast, blind collisions, slop, HTML lint (**gradient ban: any gradient = P0**), report verdict, candidate discipline |
 | Learning | `profile.json` preferences consumed by match/score/lint; verdict write-back is an iron rule |
 | Tests | 27 automated tests incl. WCAG boundary values (#767676=4.54 pass / #777777=4.48 fail), APCA, W3C export |
 

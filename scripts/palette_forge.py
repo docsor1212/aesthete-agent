@@ -309,6 +309,11 @@ def _viz_roles(hexes, dark=None):
     ordered = info if not dark else list(reversed(info))
     bg = ordered[0][1]
     ink = ordered[-1][1]
+    if dark:
+        # 明亮暗色: 大底抬亮+降饱和, 暗色不压抑(审美铁律: 暗色不是黑压压)
+        bL0, bC0, bH0 = oklch_from_hex(bg)
+        bL1 = min(0.42, bL0 + 0.11)
+        bg = hex_from_oklch(bL1, gamut_fit(bL1, bC0 * 0.72, bH0), bH0).upper()
     rest = [t for t in ordered[1:-1]] or ordered[:1]
     accent = max(rest, key=lambda t: oklch_from_hex(t[1])[1])[1] if rest else bg
     # surface/ink2 派生而非挑选: 从 bg/ink 沿 OKLCH 插值, 保色相降饱和,
@@ -605,6 +610,7 @@ def _viz_render(ord_hexes, theme, label):
     m = {"%(bg)s": R["bg"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"], "%(accent)s": R["accent"], "%(atext)s": R["atext"]}
     scenes.append(("Editorial · 杂志编辑页", _fill(tpl, m)))
 
+
     body = ""
     for title, inner in scenes:
         body += "<div class='scene'><h2>" + title + "</h2>" + inner + "</div>"
@@ -721,6 +727,76 @@ def _fill(tpl, m):
             v = "#" + v
         tpl = tpl.replace(k, v)
     return tpl
+
+
+def _export_prompt(hexes):
+    """色板 → 图像生成提示词块: 角色化+占比+反 AI 味风格约束(封面/插画管线直接可用)。"""
+    lines = []
+    if len(hexes) >= 3:
+        R = _viz_roles(hexes)
+        share = {"bg": "large background fields (about 60%)",
+                 "surface": "panels and cards (about 25%)",
+                 "ink": "subject and text blocks",
+                 "ink2": "secondary details and shadows",
+                 "accent": "accents and highlights (about 10-15%)"}
+        lines.append("PALETTE — use exactly these hex values, 60-30-10 dominance:")
+        seen = []
+        for k in ("bg", "surface", "ink", "ink2", "accent"):
+            if R[k] not in seen:
+                seen.append(R[k])
+                _, C, H = oklch_from_hex(R[k])
+                tone = "warm" if (H >= 310 or H < 70) else "cool"
+                lines.append("- #" + R[k] + " (" + tone + ", lightness " +
+                             format(oklch_from_hex(R[k])[0], ".2f") + ") — " + share[k])
+        for h in hexes:
+            if h not in seen:
+                lines.append("- #" + h + " — supporting color, small doses only")
+        warm = sum(1 for h in seen
+                   if oklch_from_hex(h)[2] >= 310 or oklch_from_hex(h)[2] < 70) >= len(seen) / 2
+        lines.append("STYLE: matte surfaces, soft directional light, film-like grain — " +
+                     ("warm cozy mood." if warm else "cool calm mood."))
+    else:
+        lines.append("PALETTE — use exactly these hex values:")
+        lines.extend("- #" + h for h in hexes)
+    lines.append("AVOID: neon glow, gradients of any kind (flat color layering only), "
+                 "saturated AI-look median "
+                 "palette, pure black shadows.")
+    return NL.join(lines)
+
+
+def cmd_report(args):
+    """一键验收工件: 四道机械闸(对比度/色盲/AI-slop/评分)聚合成单一 PASS/FAIL JSON。
+    退出码=裁决(0=PASS, 1=FAIL)。"""
+    hexes = [h.upper() for h in palette_list(args.palette)]
+    if len(hexes) < 3:
+        print("至少 3 色", file=sys.stderr); sys.exit(1)
+    engine = os.path.abspath(__file__)
+
+    def _run(*a):
+        r = subprocess.run([sys.executable, engine] + list(a), capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=180)
+        return r.returncode, (r.stdout or r.stderr or "").strip()
+
+    gates = {}
+    best = None
+    for i, a in enumerate(hexes):
+        for b in hexes[i + 1:]:
+            r = contrast_ratio(a, b)
+            if best is None or r > best[0]:
+                best = (r, a, b)
+    gates["contrast"] = {"pass": best[0] >= 4.5,
+                         "best": format(best[0], ".2f") + ":1 (#" + best[1] + " on #" + best[2] + ")",
+                         "threshold": "4.5:1"}
+    rc, out = _run("blind", "--palette", ",".join(hexes))
+    gates["color_blind"] = {"pass": rc == 0, "detail": out[-160:]}
+    rc, out = _run("slop", "--palette", ",".join(hexes))
+    gates["ai_slop"] = {"pass": rc == 0, "detail": out[-160:]}
+    rc, out = _run("score", "--palette", ",".join(hexes))
+    gates["score"] = {"pass": rc == 0, "detail": out[-160:]}
+    verdict = "PASS" if all(g["pass"] for g in gates.values()) else "FAIL"
+    print(json.dumps({"palette": hexes, "gates": gates, "verdict": verdict},
+                     ensure_ascii=False, indent=2))
+    sys.exit(0 if verdict == "PASS" else 1)
 
 
 def palette_list(s):
@@ -1383,7 +1459,7 @@ def cmd_card(args):
       <div style="display:flex;gap:10px;align-items:flex-end;height:90px;margin-top:8px">
         {"".join(f'<div style="flex:1;height:{25+((i*37)%70)}%;background:#{h};border-radius:4px 4px 0 0"></div>' for i, h in enumerate(hexes))}
       </div>
-      <div style="margin-top:14px;height:10px;border-radius:5px;background:linear-gradient(90deg,{",".join("#"+h for h in hexes)})"></div>
+      <div style="margin-top:14px;height:10px;border-radius:5px;overflow:hidden;display:flex">{"".join(f'<div style="flex:1;background:#{h}"></div>' for h in hexes)}</div>
     </div>"""
     html = f"""<!doctype html><html><head><meta charset="utf-8"><title>{name}</title></head>
 <body style="margin:0;background:#fff;font-family:system-ui">
@@ -1411,6 +1487,8 @@ def cmd_export(args):
         print(_export_w3c(hexes))
     elif args.format == "context":
         print(_export_context(hexes))
+    elif args.format == "prompt":
+        print(_export_prompt(hexes))
     elif args.format == "css":
         print(":root{")
         for i, h in enumerate(hexes):
@@ -1550,6 +1628,10 @@ def main():
     s.add_argument("--out", default=None)
     s.set_defaults(fn=cmd_visualize)
 
+    s = sub.add_parser("report")
+    s.add_argument("--palette", required=True)
+    s.set_defaults(fn=cmd_report)
+
     s = sub.add_parser("selftest")
     s.set_defaults(fn=cmd_selftest)
 
@@ -1574,7 +1656,7 @@ def main():
 
     s = sub.add_parser("export")
     s.add_argument("--palette", required=True)
-    s.add_argument("--format", default="css", choices=["css", "tailwind", "json", "svg", "w3c", "context"])
+    s.add_argument("--format", default="css", choices=["css", "tailwind", "json", "svg", "w3c", "context", "prompt"])
     s.set_defaults(fn=cmd_export)
 
     args = p.parse_args()

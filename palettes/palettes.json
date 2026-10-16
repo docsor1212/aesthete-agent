@@ -4,7 +4,7 @@
   "description": "Curated palettes harvested live from coolors.co official order pages (trending/popular/latest, 48 each; style-filter URLs proved to be SEO fallback clones of popular — do not use). tier = crowd signal (3>=50K likes, 2>=20K, 1>0, 0 new/unranked); occurrences = cross-page recurrence; computed_styles from HSL stats; flags from objective gates (CB-COLLISION-RISK / SLOP-SIGNATURE / NARROW-LIGHTNESS). Gates reject only broken architecture, never judge beauty — final judgment happens in context at use time.",
   "harvested": "2026-10-15",
   "counts": {
-   "kept": 97,
+   "kept": 117,
    "rejected": 29
   },
   "style_vocab": [
@@ -21,6 +21,578 @@
   ]
  },
  "palettes": [
+  {
+   "name": "fav-palette",
+   "hexes": [
+    "246A73",
+    "368F8B",
+    "F3DFC1",
+    "DDBEA8"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.559,
+    "max_contrast": 4.77,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-9",
+   "hexes": [
+    "8D6B94",
+    "B185A7",
+    "C3A29E",
+    "E8DBC5",
+    "FFF4E9"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.457,
+    "max_contrast": 4.15,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-8",
+   "hexes": [
+    "000000",
+    "FFFFFF",
+    "494949",
+    "7C7A7A",
+    "FF5D73"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 1.0,
+    "max_contrast": 21.0,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-7",
+   "hexes": [
+    "A63A50",
+    "F0E7D8",
+    "AB9B96",
+    "A1674A",
+    "BA6E6E"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "pastel",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.455,
+    "max_contrast": 5.12,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-6",
+   "hexes": [
+    "E0F2E9",
+    "CEB5A7",
+    "A17C6B",
+    "5B7B7A",
+    "3C887E"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.529,
+    "max_contrast": 3.96,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-5",
+   "hexes": [
+    "757780",
+    "D2CCA1",
+    "387780",
+    "DBD4D3",
+    "E83151"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.482,
+    "max_contrast": 3.49,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-4",
+   "hexes": [
+    "FBC2B5",
+    "FFA8A9",
+    "F786AA",
+    "A14A76",
+    "CDB2AB"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.386,
+    "max_contrast": 3.59,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-3",
+   "hexes": [
+    "DD614A",
+    "F48668",
+    "F4A698",
+    "C5C392",
+    "73A580"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.227,
+    "max_contrast": 1.97,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-2",
+   "hexes": [
+    "584B53",
+    "9D5C63",
+    "D6E3F8",
+    "FEF5EF",
+    "E4BB97"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.647,
+    "max_contrast": 7.67,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-15",
+   "hexes": [
+    "B47EB3",
+    "FDF5BF",
+    "FFD5FF",
+    "92D1C3",
+    "8BB8A8"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "light",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.318,
+    "max_contrast": 2.89,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-14",
+   "hexes": [
+    "32373B",
+    "4A5859",
+    "F4D6CC",
+    "F4B860",
+    "C83E4D"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.665,
+    "max_contrast": 8.79,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-13",
+   "hexes": [
+    "222E50",
+    "007991",
+    "439A86",
+    "BCD8C1",
+    "E9D985"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.569,
+    "max_contrast": 9.35,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-12",
+   "hexes": [
+    "B09E99",
+    "FEE9E1",
+    "FAD4C0",
+    "64B6AC",
+    "C0FDFB"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.386,
+    "max_contrast": 2.28,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-11",
+   "hexes": [
+    "AF4D98",
+    "D66BA0",
+    "E5A9A9",
+    "F4E4BA",
+    "9DF7E5"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.349,
+    "max_contrast": 3.89,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-1017",
+   "hexes": [
+    "F7D09C",
+    "C179F7",
+    "DBB076",
+    "795396",
+    "69DBAA"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "light",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.333,
+    "max_contrast": 4.14,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-10",
+   "hexes": [
+    "C7EAE4",
+    "A7E8BD",
+    "FCBCB8",
+    "EFA7A7",
+    "FFD972"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "light",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.131,
+    "max_contrast": 1.52,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-1",
+   "hexes": [
+    "E5DFF2",
+    "664147",
+    "7E5EBF",
+    "638A83",
+    "F5BAC4"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid",
+    "pastel"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.584,
+    "max_contrast": 6.7,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-018",
+   "hexes": [
+    "FAB6C6",
+    "B407E8",
+    "03A37E",
+    "F00A3F",
+    "3A054A"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.692,
+    "max_contrast": 9.67,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-014",
+   "hexes": [
+    "E3143E",
+    "E83F61",
+    "43DEBF",
+    "E3143E",
+    "065242"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "mid",
+    "vivid",
+    "warm"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.406,
+    "max_contrast": 5.42,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
+  {
+   "name": "fav-013",
+   "hexes": [
+    "0B3954",
+    "087E8B",
+    "BFD7EA",
+    "FF5A5F",
+    "C81D25"
+   ],
+   "text_hint": [],
+   "likes": 0,
+   "tier": 3,
+   "origin": "house",
+   "computed_styles": [
+    "cool",
+    "mid",
+    "vivid"
+   ],
+   "occurrences": 1,
+   "flags": [],
+   "metrics": {
+    "lightness_span": 0.647,
+    "max_contrast": 8.18,
+    "cb_min_separation": null
+   },
+   "sources": [
+    "house:user_accepted"
+   ]
+  },
   {
    "name": "001",
    "hexes": [

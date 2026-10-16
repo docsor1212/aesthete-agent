@@ -1,5 +1,5 @@
 ---
-version: 0.3.0
+version: 0.5.0
 name: aesthete-agent
 description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 87-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words — color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
 ---
@@ -25,7 +25,8 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 | Extract | Pull dominant colors + shares + readable-text hints from a reference image | No image redraw or matting | — |
 | Roles | bg/text/accent/primary/surface + semantic colors, with contrast checks | Not a layout or type-selection system | craft-rules.md |
 | Validate score/contrast/blind | 5-dim scorecard, exact WCAG boundaries, three color-blind simulations, fix suggestions on failure | Does not judge taste; contrast is necessary, not sufficient | color-theory.md |
-| Anti-pattern slop + lint_page | Median-trap/purple-gradient/flat-lightness detection; HTML delivery audit | Does not cover every aesthetic failure — five-lens screenshots fill the gap | anti-slop.md |
+| Anti-pattern slop + lint_page | Median-trap/purple-gradient/flat-lightness detection; HTML delivery audit — **any gradient (linear/radial/conic) is a P0 fail: flat color layering only** | Does not cover every aesthetic failure — five-lens screenshots fill the gap | anti-slop.md |
+| Acceptance report | One-shot `report` aggregates contrast / color-blind / AI-slop / scorecard into a single PASS/FAIL JSON (exit code = verdict) for the verdict write-back loop | Not a taste judgment — five-lens screenshots still apply | critique.md |
 | Preview card / showcase / make_variants | Palette cards + mockups; named showcase picks; ≥2-candidate comparison | Not a substitute for a real-environment smoke test | critique.md |
 | Visualizer scenes + SVG recolor | 10 realistic scenes (mobile / landing / dashboard / branding / typography / pattern / chart / product card / email / editorial) with derived roles, legibility gates and a text ladder; SVG recolor via slot inventory (design's own colors mapped by rank, pure black/white kept), `--shuffle N` renders N permutations with a comparison grid | Scene mockups are decision aids, not production UI | critique.md |
 | Learn house + profile.json | Accepted designs join the corpus; preferences (theme/bans/registers) apply mechanically | The learning file IS the config file — see "Verdict write-back" section | curation.md |
@@ -91,6 +92,8 @@ python "$S" card --palette ... --name "Project" --out card.html   # palette card
 python "$S" visualize --palette ... --name "Project" --out viz.html   # 10-scene visualizer; --variants N = same scenes under N palette orders
 python "$S" visualize --palette ... --svg design.svg --shuffle 3      # slot-inventory recolor: 3 permutations + comparison grid
 python "$S" critique --palette ... [--evidence evidence.json] --out report.md   # 五镜报告生成器(机械发现预填)
+python "$S" report --palette ...   # 一键验收: 四闸聚合 PASS/FAIL JSON, 退出码=裁决
+python "$S" export --palette ... --format prompt   # 色板→图像生成提示词块(封面/插画管线)
 python "$S" doctor                                 # 环境体检
 python "$SDIR/scripts/lint_page.py" page.html --palette <declared palette> --floor 12   # delivery audit
 ```
