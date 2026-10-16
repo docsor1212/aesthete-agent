@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aesthete-agent — color systems that pass the review</title>
+<meta name="description" content="A mechanical color engine for front-end work: register-matched palette library, OKLCH role derivation, and four gates that catch contrast failures, color-blindness collisions and AI-slop signatures before anything ships.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233D405B'/%3E%3Crect x='6' y='6' width='9' height='20' rx='2' fill='%23FFA69E'/%3E%3Crect x='17' y='6' width='9' height='9' rx='2' fill='%23B8F2E6'/%3E%3Crect x='17' y='17' width='9' height='9' rx='2' fill='%23F6F2E8'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#F6F2E8; --panel:#FDF7EE; --ink:#3D405B; --muted:#5E6472;
+    --coral:#E07066; --coralsoft:#FFA69E; --mint:#B8F2E6; --mist:#AED9E0;
+    --bronze:#BC6C25; --line:#E2DACA;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.55}
+  .wrap{max-width:1060px; margin:0 auto; padding:0 28px}
+
+  /* ── topbar ── */
+  .top{border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex; align-items:center; justify-content:space-between; height:64px}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; letter-spacing:-0.01em}
+  .brand .mark{width:26px; height:26px; border-radius:7px; background:var(--ink); display:inline-flex; padding:4px; gap:2px}
+  .brand .mark i{display:block; flex:1; border-radius:2px}
+  .chip{font-size:12px; font-weight:700; background:var(--coralsoft); color:var(--ink); border-radius:999px; padding:2px 10px}
+  .top nav{display:flex; gap:22px}
+  .top nav a{color:var(--ink); text-decoration:none; font-size:14.5px; font-weight:600; border-bottom:2px solid transparent; padding-bottom:2px}
+  .top nav a:hover{border-bottom-color:var(--coral)}
+
+  /* ── hero ── */
+  .hero{padding:84px 0 56px}
+  .kicker{font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted)}
+  .hero h1{font-size:clamp(40px,6vw,64px); line-height:1.06; letter-spacing:-0.025em; font-weight:800; max-width:15ch; margin:18px 0 22px}
+  .hero h1 em{font-style:normal; color:var(--bronze)}
+  .hero p{font-size:19px; color:var(--muted); max-width:62ch; margin-bottom:34px}
+  .cta{display:flex; gap:14px; flex-wrap:wrap}
+  .btn{display:inline-block; font-weight:700; font-size:16px; text-decoration:none; border-radius:10px; padding:13px 26px}
+  .btn.primary{background:var(--ink); color:var(--paper)}
+  .btn.primary:hover{background:#2E3147}
+  .btn.ghost{color:var(--ink); border:2px solid var(--ink)}
+  .btn.ghost:hover{background:var(--panel)}
+
+  /* ── stat strip ── */
+  .stats{border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+  .stats .wrap{display:flex; flex-wrap:wrap}
+  .stat{flex:1 1 160px; padding:26px 20px; border-left:1px solid var(--line)}
+  .stat:first-child{border-left:none}
+  .stat b{display:block; font-size:30px; font-weight:800; letter-spacing:-0.02em}
+  .stat span{font-size:13.5px; color:var(--muted)}
+
+  /* ── demos ── */
+  .demos{padding:72px 0 8px}
+  .sec-head{margin-bottom:30px}
+  .sec-head h2{font-size:30px; letter-spacing:-0.02em; font-weight:800}
+  .sec-head p{color:var(--muted); margin-top:8px; max-width:60ch}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:20px}
+  .card{border-radius:14px; padding:26px 26px 22px; text-decoration:none; color:var(--ink); display:flex; flex-direction:column; gap:10px; border:1px solid rgba(61,64,91,0.08)}
+  .card:hover{transform:translateY(-3px); box-shadow:0 10px 24px rgba(61,64,91,0.10)}
+  .card{transition:transform .15s ease, box-shadow .15s ease}
+  .card .tag{font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted)}
+  .card h3{font-size:21px; letter-spacing:-0.015em; font-weight:800}
+  .card p{font-size:15px; color:var(--muted); flex:1}
+  .card .go{font-weight:700; font-size:15px; color:var(--ink); text-decoration:underline; text-decoration-color:var(--coral); text-decoration-thickness:2px; text-underline-offset:4px}
+  .card.c-mint{background:var(--mint)}
+  .card.c-mist{background:var(--mist)}
+  .card.c-coral{background:var(--coralsoft)}
+  .card.c-dark{background:var(--ink)}
+  .card.c-dark,.card.c-dark p{color:var(--paper)}
+  .card.c-dark .tag{color:var(--mint)}
+  .card.c-dark .go{color:var(--paper); text-decoration-color:var(--coralsoft)}
+  .card.c-coral p,.card.c-mint p,.card.c-mist p{color:#464A66}
+
+  /* ── how ── */
+  .how{padding:72px 0}
+  .steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:26px; counter-reset:step}
+  .step{position:relative; padding-top:14px; border-top:2px solid var(--line)}
+  .step .num{font-size:54px; font-weight:800; letter-spacing:-0.03em; color:var(--coral); line-height:1}
+  .step h4{font-size:17.5px; font-weight:800; margin:12px 0 6px}
+  .step p{font-size:14.5px; color:var(--muted)}
+
+  /* ── install ── */
+  .install{background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:56px 0}
+  .install h2{font-size:26px; letter-spacing:-0.02em; font-weight:800; margin-bottom:24px}
+  .rows{display:flex; flex-direction:column; gap:14px}
+  .row{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+  .row .lbl{width:120px; font-size:13px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted)}
+  .row code{background:var(--ink); color:var(--paper); font-size:14.5px; border-radius:8px; padding:10px 16px; font-family:ui-monospace,"Cascadia Code",Consolas,monospace; overflow-x:auto; max-width:100%}
+  .row .note{font-size:13.5px; color:var(--muted)}
+
+  /* ── footer ── */
+  footer{padding:40px 0 56px}
+  footer .wrap{display:flex; justify-content:space-between; align-items:center; gap:18px; flex-wrap:wrap}
+  footer nav{display:flex; gap:20px; flex-wrap:wrap}
+  footer a{color:var(--ink); font-size:14px; font-weight:600; text-decoration:none; border-bottom:2px solid var(--coralsoft)}
+  footer a:hover{border-bottom-color:var(--coral)}
+  footer .fine{font-size:13px; color:var(--muted)}
+
+  @media (max-width:640px){
+    .hero{padding:56px 0 40px}
+    .top nav{display:none}
+    .stat{border-left:none; border-top:1px solid var(--line)}
+    .stats .wrap{flex-direction:column}
+    .stat:first-child{border-top:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span class="brand">
+      <span class="mark" aria-hidden="true"><i style="background:var(--coralsoft)"></i><i style="background:var(--mint)"></i></span>
+      aesthete-agent <span class="chip">v0.5.0</span>
+    </span>
+    <nav>
+      <a href="demo/showcase.html">Showcase</a>
+      <a href="#how">How it works</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/docsor1212/aesthete-agent">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="kicker">Mechanical color engine · Agent skill + MCP server</div>
+    <h1>Color systems that <em>pass the review.</em></h1>
+    <p>aesthete-agent turns five colors into a complete front-end color system: an evidence library matched by register, OKLCH role derivation, and mechanical gates that catch contrast failures, color-blindness collisions and AI-slop signatures before anything ships.</p>
+    <div class="cta">
+      <a class="btn primary" href="demo/showcase.html">Open the showcase →</a>
+      <a class="btn ghost" href="demo/visualizer-light.html">Run the visualizer</a>
+    </div>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="wrap">
+    <div class="stat"><b>117</b><span>curated evidence palettes</span></div>
+    <div class="stat"><b>4</b><span>mechanical gates, no eyeballing</span></div>
+    <div class="stat"><b>10</b><span>real front-end scene types</span></div>
+    <div class="stat"><b>OKLCH</b><span>perceptual role derivation</span></div>
+  </div>
+</section>
+
+<section class="demos">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>See it render</h2>
+      <p>Every page below was produced end-to-end by the engine — layout, roles, text levels and contrast included. No hand-picked colors.</p>
+    </div>
+    <div class="grid">
+      <a class="card c-mint" href="demo/showcase.html">
+        <span class="tag">Flagship demo</span>
+        <h3>Visual showcase</h3>
+        <p>Ten real front-end scenes — landing, dashboard, editor, commerce — rendered across curated palettes, light and dark.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="card c-mist" href="demo/visualizer-light.html">
+        <span class="tag">Live tool</span>
+        <h3>Palette visualizer · light</h3>
+        <p>Paste any five colors and get a full scene back: derived surface, ink, accents, and a text ladder that stays readable.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="card c-dark" href="demo/visualizer-dark.html">
+        <span class="tag">Live tool</span>
+        <h3>Palette visualizer · dark</h3>
+        <p>The same engine on a dark surface: roles lifted, saturation trimmed, contrast held — no muddy, glowing mess.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="card c-coral" href="demo/card.html">
+        <span class="tag">Artifact</span>
+        <h3>Palette card</h3>
+        <p>One palette as a printable card: hex values, derived roles and the actual contrast numbers next to each pairing.</p>
+        <span class="go">Open →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>How it works</h2>
+      <p>Four steps, all mechanical. The point is that taste is encoded as rules, so the output is defensible — every number can be checked.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">01</div>
+        <h4>Match</h4>
+        <p>Pick a register — calm, vivid, elegant, dark — and the engine selects from an evidence library of curated palettes.</p>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <h4>Derive</h4>
+        <p>Five colors become a working system: surface, ink, accents and weak text levels, derived in OKLCH for perceptual evenness.</p>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <h4>Gate</h4>
+        <p>Contrast (WCAG + APCA), three color-blind simulations, an AI-slop signature check and a five-axis score. Failures are named, not guessed.</p>
+      </div>
+      <div class="step">
+        <div class="num">04</div>
+        <h4>Emit</h4>
+        <p>CSS custom properties, SVG slot lists, scene renderings or an image-generation prompt block — ready to paste into real work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="install" id="install">
+  <div class="wrap">
+    <h2>Install</h2>
+    <div class="rows">
+      <div class="row">
+        <span class="lbl">MCP server</span>
+        <code>uvx aesthete-agent-mcp</code>
+        <span class="note">13 tools from PyPI, any MCP client</span>
+      </div>
+      <div class="row">
+        <span class="lbl">Smithery</span>
+        <code>npx -y @smithery/cli install docsor1212/aesthete-agent-mcp --client claude</code>
+      </div>
+      <div class="row">
+        <span class="lbl">Agent skill</span>
+        <code>aesthete-agent</code>
+        <span class="note">SKILL.md + engine, published on SkillHub and ClawHub</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="https://github.com/docsor1212/aesthete-agent">GitHub</a>
+      <a href="https://pypi.org/project/aesthete-agent-mcp/">PyPI</a>
+      <a href="https://smithery.ai/server/docsor1212/aesthete-agent-mcp">Smithery</a>
+      <a href="https://docsor.cn/aesthete/">docsor.cn</a>
+    </nav>
+    <span class="fine">This page is itself rendered by the engine — one of its samples.</span>
+  </div>
+</footer>
+
+</body>
+</html>
