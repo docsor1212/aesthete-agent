@@ -27,7 +27,7 @@ npx skills add docsor1212/aesthete-agent
 **MCP server** (Claude Desktop, Cursor, any MCP client) — expose the engine as tools:
 
 ```bash
-uvx --from "git+https://github.com/docsor1212/aesthete-agent#subdirectory=mcp" aesthete-agent-mcp
+uvx aesthete-agent-mcp
 ```
 
 **SkillHub** (中文站): search `aesthete-agent` or `前端美学`.
@@ -87,7 +87,7 @@ Nobody can know "beautiful" a priori — so the library is built from three filt
 | GitHub (source of truth) | [docsor1212/aesthete-agent](https://github.com/docsor1212/aesthete-agent) | `npx skills add docsor1212/aesthete-agent` |
 | ClawHub (international) | `aesthete-agent` | via ClawHub CLI |
 | SkillHub (中文站) | `aesthete-agent` | search `前端美学` |
-| MCP | `aesthete-agent-mcp` | `uvx --from git+...#subdirectory=mcp aesthete-agent-mcp` |
+| MCP | `aesthete-agent-mcp` | `uvx aesthete-agent-mcp` |
 
 ## License
 

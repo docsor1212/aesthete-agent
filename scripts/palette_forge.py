@@ -353,6 +353,25 @@ def _viz_roles(hexes, dark=None):
             "danger": danger, "atext": atext, "dark": dark}
 
 
+def _viz_text_levels(R):
+    """多级文字阶梯(弱声部系统): ink/ink2 之外的弱声部。
+    t3=弱小字(脚注/图注), t4=最弱(占位/划线价), 从 bg→ink 沿 OKLCH 派生并保底 1.5:1。"""
+    bL, bC, bH = oklch_from_hex(R["bg"])
+    iL, iC, iH = oklch_from_hex(R["ink"])
+    lv = {}
+    for key, frac in (("t3", 0.34), ("t4", 0.18)):
+        L = bL + (iL - bL) * frac
+        C = min(0.045, max(bC, 0.012))
+        h6 = hex_from_oklch(L, gamut_fit(L, C, iH), iH).upper()
+        k = 0
+        while contrast_ratio(h6, R["bg"]) < 1.5 and k < 10:
+            k += 1
+            L2 = L + (iL - L) * k / 10
+            h6 = hex_from_oklch(L2, gamut_fit(L2, C, iH), iH).upper()
+        lv[key] = h6
+    return lv
+
+
 def _viz_render(ord_hexes, theme, label):
     """同场景换色渲染一个 variant(吸收 visualizer 空格洗牌循环:设计固定,色板变化)。"""
     hexes = ord_hexes
@@ -364,6 +383,7 @@ def _viz_render(ord_hexes, theme, label):
     sage = next((h for h in _cands if contrast_ratio(h, R["surface"]) >= 3.0), R["ink2"])
     honey = (_cands[0] if _cands and contrast_ratio(_cands[0], R["surface"]) >= 1.6
              else R["ink2"])
+    tl = _viz_text_levels(R)
     legend = NL.join(
         "<span class='chip' style='background:#" + R[k] + ";color:#" + t_on[k] + "'>" + k + ":#" + R[k] + "</span>"
         for k in ("bg", "surface", "ink", "ink2", "accent", "atext", "danger"))
@@ -497,9 +517,12 @@ def _viz_render(ord_hexes, theme, label):
       "  <div style='font:700 15px system-ui;margin-top:8px'>Heading 2 — structure speaks in the darkest ink</div>",
       "  <div style='font:400 12px/1.7 system-ui;color:%(ink2)s;margin-top:6px'>Body 12px — secondary ink at 1.7 line height. The quick brown fox jumps over the lazy dog 0123456789.</div>",
       "  <div style='font:600 10px system-ui;letter-spacing:.18em;color:%(atext)s;margin-top:8px'>EYEBROW LABEL — ACCENT VOICE</div>",
-      "  <div style='font:400 10px monospace;color:%(ink2)s;margin-top:6px'>mono 10px — data: 1,204 · 86.4% · +3.2</div></div>",
+      "  <div style='font:400 10px monospace;color:%(ink2)s;margin-top:6px'>mono 10px — data: 1,204 · 86.4% · +3.2</div>",
+      "  <div style='font:400 10px system-ui;color:%(t3)s;margin-top:4px'>Caption — faint voice for footnotes and axis labels</div>",
+      "  <div style='font:400 11px system-ui;color:%(t4)s;margin-top:3px'>Placeholder — weakest voice, decorative only</div></div>",
     ])
-    m = {"%(bg)s": R["bg"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"], "%(atext)s": R["atext"]}
+    m = {"%(bg)s": R["bg"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"], "%(atext)s": R["atext"],
+         "%(t3)s": tl["t3"], "%(t4)s": tl["t4"]}
     scenes.append(("Typography · 字阶标本", _fill(tpl, m)))
 
     # S6 Pattern
@@ -514,6 +537,74 @@ def _viz_render(ord_hexes, theme, label):
           "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px'>" + tiles + "</div></div>")
     scenes.append(("Pattern · 图案节奏", sc))
 
+
+    # S7 Data Chart
+    cbars = ""
+    for i in range(7):
+        h1 = 30 + ((i * 37) % 65)
+        h2 = 22 + ((i * 23) % 45)
+        cbars += ("<div style='flex:1;display:flex;align-items:flex-end;gap:3px;align-self:stretch'>"
+                  "<div style='flex:1;height:" + str(h1) + "%;background:#" + R["accent"] + ";border-radius:2px 2px 0 0'></div>"
+                  "<div style='flex:1;height:" + str(h2) + "%;background:#" + R["ink2"] + ";opacity:.45;border-radius:2px 2px 0 0'></div></div>")
+    tpl = NL.join([
+      "<div style='padding:14px 16px;background:%(bg)s;color:%(ink)s'>",
+      "  <div style='display:flex;justify-content:space-between;align-items:baseline'>",
+      "    <b style='font:700 13px system-ui'>Weekly active users</b>",
+      "    <span style='font:500 9px system-ui;color:%(t3)s'>Mar 1–7</span></div>",
+      "  <div style='display:flex;align-items:flex-end;gap:10px;height:110px;margin-top:10px;border-bottom:2px solid %(ink2)s;padding:0 4px'>%(cbars)s</div>",
+      "  <div style='display:flex;gap:14px;margin-top:8px;font:500 9px system-ui;color:%(t3)s'>",
+      "    <span><span style='display:inline-block;width:8px;height:8px;background:%(accent)s;border-radius:2px'></span> 2026</span>",
+      "    <span><span style='display:inline-block;width:8px;height:8px;background:%(ink2)s;border-radius:2px'></span> 2025</span></div></div>",
+    ])
+    m = {"%(bg)s": R["bg"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"], "%(accent)s": R["accent"],
+         "%(t3)s": tl["t3"], "%(cbars)s": cbars}
+    scenes.append(("Data Chart · 数据图表", _fill(tpl, m)))
+
+    # S8 E-commerce Product Card
+    tpl = NL.join([
+      "<div style='padding:14px;background:%(bg)s'>",
+      "  <div style='width:200px;margin:0 auto;background:%(surface)s;border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.06)'>",
+      "    <div style='height:100px;background:%(accent)s;display:flex;align-items:center;justify-content:center'>",
+      "      <div style='width:52px;height:68px;border-radius:6px;background:%(honey)s'></div></div>",
+      "    <div style='padding:10px 12px'>",
+      "      <div style='font:700 12px system-ui;color:%(ink)s'>Ceramic Pour-Over Set</div>",
+      "      <div style='font:500 9px system-ui;color:%(t3)s;margin-top:2px'>★★★★★ <span style='color:%(t4)s'>(214)</span></div>",
+      "      <div style='margin-top:6px'><b style='font:800 15px system-ui;color:%(ink)s'>248</b> <span style='font:400 10px system-ui;color:%(t4)s;text-decoration:line-through'>328</span></div>",
+      "      <div style='margin-top:8px;padding:7px 0;text-align:center;border-radius:6px;background:%(accent)s;color:%(tac)s;font:700 11px system-ui'>Add to cart</div>",
+      "      <div style='font:400 9px system-ui;color:%(t3)s;margin-top:6px'>Free shipping over 199 · 7-day returns</div></div></div></div>",
+    ])
+    m = {"%(bg)s": R["bg"], "%(surface)s": R["surface"], "%(ink)s": R["ink"], "%(accent)s": R["accent"],
+         "%(honey)s": honey, "%(tac)s": t_on["accent"], "%(t3)s": tl["t3"], "%(t4)s": tl["t4"]}
+    scenes.append(("E-commerce · 商品卡", _fill(tpl, m)))
+
+    # S9 Email Template
+    tpl = NL.join([
+      "<div style='background:%(surface)s;padding:14px'>",
+      "  <div style='max-width:260px;margin:0 auto;background:%(bg)s;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.07)'>",
+      "    <div style='padding:10px 14px;background:%(accent)s;color:%(tac)s;font:800 12px system-ui'>acme weekly</div>",
+      "    <div style='padding:14px'>",
+      "      <div style='font:800 15px/1.3 system-ui;color:%(ink)s'>The color issue #42</div>",
+      "      <div style='height:3px;width:36px;background:%(honey)s;margin:8px 0'></div>",
+      "      <div style='font:400 11px/1.6 system-ui;color:%(ink2)s'>This week: three palettes that pass every mechanical gate, and why muted beats loud.</div>",
+      "      <div style='margin-top:10px;display:inline-block;padding:8px 14px;border-radius:6px;background:%(ink)s;color:%(tink)s;font:700 11px system-ui'>Read the issue</div></div>",
+      "    <div style='padding:8px 14px;border-top:1px solid rgba(0,0,0,.06);font:400 9px system-ui;color:%(t3)s'>You receive this because you subscribed · unsubscribe</div></div></div>",
+    ])
+    m = {"%(bg)s": R["bg"], "%(surface)s": R["surface"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"], "%(accent)s": R["accent"],
+         "%(honey)s": honey, "%(tac)s": t_on["accent"], "%(tink)s": t_on["ink"], "%(t3)s": tl["t3"]}
+    scenes.append(("Email · 邮件模板", _fill(tpl, m)))
+
+    # S10 Editorial
+    tpl = NL.join([
+      "<div style='padding:14px 16px;background:%(bg)s;color:%(ink)s'>",
+      "  <div style='font:800 11px system-ui;letter-spacing:.3em;color:%(atext)s'>THE REVIEW</div>",
+      "  <div style='font:800 19px/1.2 Georgia,serif;margin-top:6px'>The quiet power of a restrained palette</div>",
+      "  <div style='display:flex;gap:10px;margin-top:8px'>",
+      "    <div style='flex:1;font:400 10px/1.65 Georgia,serif;color:%(ink2)s'>Design movements come and go, but restraint compounds. A palette of five disciplined colors outlives any trend cycle and reads as intent.</div>",
+      "    <div style='flex:1;font:400 10px/1.65 Georgia,serif;color:%(ink2)s;border-left:2px solid %(accent)s;padding-left:10px'>Mechanical validation does not kill taste — it protects it from the median.</div></div></div>",
+    ])
+    m = {"%(bg)s": R["bg"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"], "%(accent)s": R["accent"], "%(atext)s": R["atext"]}
+    scenes.append(("Editorial · 杂志编辑页", _fill(tpl, m)))
+
     body = ""
     for title, inner in scenes:
         body += "<div class='scene'><h2>" + title + "</h2>" + inner + "</div>"
@@ -527,8 +618,8 @@ def _viz_render(ord_hexes, theme, label):
 
 
 def cmd_visualize(args):
-    """Palette Visualizer: 色板套进 6 类真实 UI 场景自审;
-    --svg 可对其额外做重着色(纯黑白保留,其余映射到角色)。"""
+    """Palette Visualizer: 色板套进 10 类真实 UI 场景自审;
+    --svg 槽位清单重着色(纯黑白保留), --shuffle N 出多排列对比网格。"""
     hexes = [h.upper() for h in palette_list(args.palette)]
     if len(hexes) < 3:
         print("至少 3 色", file=sys.stderr); sys.exit(1)
@@ -536,41 +627,75 @@ def cmd_visualize(args):
     orders = [hexes[i:] + hexes[:i] for i in range(n_var)]
     if n_var >= 2:
         orders[1] = list(reversed(orders[1]))
-    R = _viz_roles(hexes, dark=(args.theme == "dark"))
     if args.svg:
         if not os.path.exists(args.svg):
             print(f"文件不存在: {args.svg}", file=sys.stderr); sys.exit(2)
         raw = open(args.svg, encoding="utf-8", errors="ignore").read()
-        def _nearest_role(hh):
-            if hh in ("000000", "FFFFFF"):
-                return "#" + hh
-            L, C, H = oklch_from_hex(hh)
-            if C < 0.04:
-                return "#" + (R["ink"] if L < 0.5 else R["bg"])
-            if 8 <= H <= 35 and C > 0.08:
-                return "#" + R["danger"]
-            if C >= 0.09:
-                return "#" + R["accent"]
-            return "#" + (R["ink"] if L < 0.5 else R["surface"])
-        def _sub(m):
-            hh = m.group(2).strip("#").upper()
-            if len(hh) == 3:
-                hh = "".join(c * 2 for c in hh)
-            if len(hh) != 6 or m.group(2).lower().startswith(("url", "none")):
-                return m.group(0)
-            return m.group(1) + ":" + _nearest_role(hh)
-        def _sub_attr(m):
-            hh = m.group(2).strip("#").upper()
-            if len(hh) == 3:
-                hh = "".join(c * 2 for c in hh)
-            if len(hh) != 6:
-                return m.group(0)
-            return m.group(1) + '="' + _nearest_role(hh) + '"'
-        svg_out = re.sub(r"(fill|stroke):\s*(#[0-9a-fA-F]{3,6})", _sub, raw)
-        svg_out = re.sub(r'(fill|stroke)="(#[0-9a-fA-F]{3,6})"', _sub_attr, svg_out)
-        svg_out_path = os.path.splitext(args.svg)[0] + ".recolored.svg"
-        open(svg_out_path, "w", encoding="utf-8").write(svg_out)
-        print(f"SVG 重着色: {svg_out_path}(纯黑白保留,其余映射角色)")
+        # 槽位清单模型: 提取 SVG 自身颜色清单,
+        # 按明度秩映射色板, 纯黑白保留, 设计的明暗结构不被破坏
+        found = re.findall(r"(?:fill|stroke)[:=][\"']?\s*(#[0-9a-fA-F]{3,6})", raw)
+        inv = []
+        for c in found:
+            c = c[1:].upper()
+            if len(c) == 3:
+                c = "".join(x * 2 for x in c)
+            if len(c) != 6 or c in ("000000", "FFFFFF") or c not in inv:
+                if len(c) == 6 and c not in ("000000", "FFFFFF"):
+                    inv.append(c)
+        inv.sort(key=lambda h: oklch_from_hex(h)[0])
+        n_sh = max(1, min(int(getattr(args, "shuffle", 1) or 1), 6))
+        def _rank_map(svg_txt, order):
+            # order 即映射序列: k=0 传明度排序(保设计明暗结构), k>=1 传排列(变体)
+            pal = list(order)
+            def _tgt(c):
+                i = inv.index(c)
+                if len(pal) == 1 or len(inv) == 1:
+                    return pal[0]
+                return pal[round(i * (len(pal) - 1) / (len(inv) - 1))]
+            def _t(m):
+                c = m.group(2).strip("#").upper()
+                if len(c) == 3:
+                    c = "".join(x * 2 for x in c)
+                if len(c) != 6 or c in ("000000", "FFFFFF") or c not in inv:
+                    return m.group(0)
+                return m.group(1) + ":" + "#" + _tgt(c)
+            out = re.sub(r"(fill|stroke):\s*(#[0-9a-fA-F]{3,6})", _t, svg_txt)
+            def _t2(m):
+                c = m.group(2).strip("#").upper()
+                if len(c) == 3:
+                    c = "".join(x * 2 for x in c)
+                if len(c) != 6 or c in ("000000", "FFFFFF") or c not in inv:
+                    return m.group(0)
+                return m.group(1) + "=\"#" + _tgt(c) + "\""
+            out = re.sub(r"(fill|stroke)=\"(#[0-9a-fA-F]{3,6})\"", _t2, out)
+            return out
+        base = os.path.splitext(args.svg)[0]
+        outs = []
+        for k in range(n_sh):
+            order = list(hexes)
+            if k == 1:
+                order = list(reversed(order))
+            elif k > 1:
+                order = hexes[k:] + hexes[:k]
+            if k == 0:
+                order = sorted(order, key=lambda h: oklch_from_hex(h)[0])
+            p = base + (".recolored.svg" if k == 0 else ".recolor-%d.svg" % (k + 1))
+            open(p, "w", encoding="utf-8").write(_rank_map(raw, order))
+            outs.append((p, order))
+        if n_sh > 1:
+            grid = ["<!doctype html><meta charset='utf-8'><body style='background:#23272E;font-family:system-ui;padding:10px'>"]
+            for p, order in outs:
+                grid.append("<div style='color:#E8EEF6;padding:8px 6px 4px;font:600 12px monospace'>" +
+                            " ".join("#" + h for h in order) + "</div>"
+                            "<img src='" + os.path.basename(p) + "' style='max-width:96%;border-radius:8px;margin:0 6px 16px'>")
+            grid.append("</body>")
+            gp = base + ".recolor-grid.html"
+            open(gp, "w", encoding="utf-8").write("".join(grid))
+            outs.append((gp, []))
+        print("SVG 槽位清单重着色: " + ", ".join(p for p, _ in outs) +
+              " (清单=%d 色; 纯黑白保留; %d 排列)" % (len(inv), n_sh))
+        if not inv:
+            print("提示: SVG 未发现可映射颜色(fill/stroke 的 hex)")
     vcss = ""
     sections = []
     for vi, oh in enumerate(orders):
@@ -585,7 +710,8 @@ def cmd_visualize(args):
             + "".join(sections) + "</body></html>")
     out = args.out or "visualizer.html"
     open(out, "w", encoding="utf-8").write(html)
-    print("visualizer: " + out + " (6 场景; 角色 bg=#" + R["bg"] + " ink=#" + R["ink"] + " accent=#" + R["accent"] + ")")
+    R = _viz_roles(hexes, dark=(args.theme == "dark"))
+    print("visualizer: " + out + " (10 场景; 角色 bg=#" + R["bg"] + " ink=#" + R["ink"] + " accent=#" + R["accent"] + ")")
     print("自审: 截图/emitImage 本文件, 按五镜判色在真实版式里是否成立")
 
 
@@ -1420,6 +1546,7 @@ def main():
     s.add_argument("--theme", default=None, choices=["light", "dark"])
     s.add_argument("--svg", default=None, help="对其做重着色(纯黑白保留)")
     s.add_argument("--variants", type=int, default=1, help="同场景 N 次色板排列对比(旋转+反转)")
+    s.add_argument("--shuffle", type=int, default=1, help="--svg 重着色排列数(含对比网格页)")
     s.add_argument("--out", default=None)
     s.set_defaults(fn=cmd_visualize)
 

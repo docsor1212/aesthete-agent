@@ -71,7 +71,8 @@ class TestVisualizer(unittest.TestCase):
         r = run([ENGINE, "visualize", "--palette", PAL, "--name", "T", "--out", out])
         self.assertEqual(r.returncode, 0, r.stdout[-300:])
         html = open(out, encoding="utf-8").read()
-        for scene in ("Mobile App", "Landing", "Dashboard", "Branding", "Typography", "Pattern"):
+        for scene in ("Mobile App", "Landing", "Dashboard", "Branding", "Typography", "Pattern",
+                      "Data Chart", "E-commerce", "Email", "Editorial"):
             self.assertIn(scene, html)
         os.unlink(out)
     def test_visualize_dark_runs(self):
@@ -86,6 +87,37 @@ class TestVisualizer(unittest.TestCase):
         html = open(out, encoding="utf-8").read()
         self.assertEqual(html.count("Variant "), 3)
         self.assertEqual(html.count("Mobile App"), 3)
+        os.unlink(out)
+    def test_visualize_ten_scenes_ladder(self):
+        out = os.path.join(TMP, "viz_10.html")
+        r = run([ENGINE, "visualize", "--palette", PAL, "--out", out])
+        self.assertEqual(r.returncode, 0, r.stdout[-300:])
+        html = open(out, encoding="utf-8").read()
+        self.assertIn("Caption", html)
+        self.assertIn("Placeholder", html)
+        os.unlink(out)
+    def test_svg_shuffle_grid(self):
+        svg = os.path.join(TMP, "sh.svg")
+        open(svg, "w", encoding="utf-8").write(
+            '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#E8E4F8"/>'
+            '<circle fill="#7C6BD4"/><rect fill="#3A3160"/><path fill="#FFFFFF"/>'
+            '<line stroke="#000000"/></svg>')
+        out = os.path.join(TMP, "viz_sh.html")
+        r = run([ENGINE, "visualize", "--palette", PAL, "--svg", svg, "--shuffle", "3", "--out", out])
+        self.assertEqual(r.returncode, 0, r.stdout[-300:])
+        for f in (svg.replace(".svg", ".recolored.svg"),
+                  svg.replace(".svg", ".recolor-2.svg"),
+                  svg.replace(".svg", ".recolor-3.svg"),
+                  svg.replace(".svg", ".recolor-grid.html")):
+            self.assertTrue(os.path.exists(f), f)
+        rec = open(svg.replace(".svg", ".recolor-2.svg"), encoding="utf-8").read()
+        self.assertIn("#FFFFFF", rec)
+        self.assertIn("#000000", rec)
+        os.unlink(svg)
+        for f in (svg.replace(".svg", ".recolored.svg"), svg.replace(".svg", ".recolor-2.svg"),
+                  svg.replace(".svg", ".recolor-3.svg"), svg.replace(".svg", ".recolor-grid.html")):
+            if os.path.exists(f):
+                os.unlink(f)
         os.unlink(out)
     def test_svg_recolor_keeps_pure_bw(self):
         svg = os.path.join(TMP, "in.svg")

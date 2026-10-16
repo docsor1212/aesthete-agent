@@ -27,9 +27,9 @@ class TestDescZH(unittest.TestCase):
     def test_brand_not_in_first_60(self):
         self.assertNotIn("Aesthete", self.desc[:60], "品牌词不得在首 60 字符")
     def test_skip_when_present(self):
-        self.assertIn("Skip when:", self.desc)
+        self.assertIn("Skip when", self.desc)
         for w in ("翻译", "润色"):
-            self.assertIn(w, self.desc.split("Skip when:")[1])
+            self.assertIn(w, self.desc.split("Skip when", 1)[1])
     def test_version_not_decreased(self):
         v = float(re.search(r"version: ([\d.]+)", self.fm).group(1).rsplit(".", 1)[0].replace(".", ""))
         self.assertGreaterEqual(v, 2.2, "版本只增不减")
@@ -47,7 +47,7 @@ class TestDescEN(unittest.TestCase):
     def test_brand_not_in_first_60(self):
         self.assertNotIn("Aesthete", self.desc[:60], "brand word must not appear in first 60 chars")
     def test_skip_when_present(self):
-        self.assertIn("Skip when:", self.desc)
+        self.assertIn("Skip when", self.desc)
     def test_body_english_anchors(self):
         s = open(SKILL, encoding="utf-8").read()
         self.assertIn("Capability × Boundary Quick Reference", s)
