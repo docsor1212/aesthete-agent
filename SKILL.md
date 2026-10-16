@@ -10,7 +10,7 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 
 ⛔ Iron rules:
 1. **No bare palette writing.** Every color task goes through the six-step method; step 6 (five-lens review) is not skippable.
-2. **No runtime access to coolors.co** — no public API, direct connections hit Cloudflare 403; all data ships offline.
+2. **No runtime access to the source site** — no public API, direct connections hit Cloudflare 403; all data ships offline.
 3. **The brief is law**: colors and aesthetics pinned by the user are binding constraints. Already-shipped brand systems are out of scope for re-paletteing.
 4. **Bounded verification**: build fully → one batched review → one batched fix round → at most one more confirmation → **stop polishing**.
 5. **Candidate discipline**: user verdicts require ≥2 full-page candidates (`make_variants.py` builds the comparison sheet); a single proposal is not sent for review.
@@ -130,7 +130,7 @@ On user rejection, run a **necropsy** first (write the transferable failure mode
 | Harmony rules / contrast formulas / color semantics | color-theory.md |
 | Find a named rule fast | craft-rules.md (rule cards) |
 | Grow the library / selection methodology | curation.md |
-| Harvest more coolors data | harvest-coolors.md (5 field-tested traps) |
+| Harvest more source data | harvest-playbook.md (5 field-tested traps) |
 
 | File | Content |
 |---|---|
@@ -139,8 +139,8 @@ On user rejection, run a **necropsy** first (write the transferable failure mode
 | `references/color-theory.md` | Harmony rules/OKLCH/lightness architecture/60-30-10/WCAG formulas/semantics |
 | `references/anti-slop.md` | AI-slop bans and evidence chain |
 | `references/curation.md` | Selection methodology + library-growth pipeline |
-| `references/harvest-coolors.md` | coolors harvesting recipe (5 field-tested traps) |
+| `references/harvest-playbook.md` | source harvesting recipe (5 field-tested traps) |
 
 ## Selection methodology
 
-Three filters: ① crowd signal (official coolors charts + likes tiers + cross-page recurrence) ② objective gates (reject only objectively broken: flat lightness / no readable pair; flag CB collisions / slop / narrow lightness) ③ in-context self-review (the final verdict). **Nobody can know "beautiful" a priori** — the library sets the starting line, the context decides. Details in `references/curation.md`.
+Three filters: ① crowd signal (source-site official charts + likes tiers + cross-page recurrence) ② objective gates (reject only objectively broken: flat lightness / no readable pair; flag CB collisions / slop / narrow lightness) ③ in-context self-review (the final verdict). **Nobody can know "beautiful" a priori** — the library sets the starting line, the context decides. Details in `references/curation.md`.

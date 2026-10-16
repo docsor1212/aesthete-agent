@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """build_library.py — 扩库流水线(随包发布)。
 
-从收割的原始 JSON(coolors 排序页卡片数据,格式见 references/harvest-coolors.md)
+从收割的原始 JSON(源站排序页卡片数据,格式见 references/harvest-playbook.md)
 构建调色板库:去重、HSL 风格标签、点赞分层、客观质量门(平坦明度/无可读对拒,
 色盲碰撞/slop/窄明度打旗)。
 

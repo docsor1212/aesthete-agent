@@ -1,7 +1,7 @@
 {
  "_meta": {
   "schema": 2,
-  "description": "Curated palettes harvested live from coolors.co official order pages (trending/popular/latest, 48 each; style-filter URLs proved to be SEO fallback clones of popular — do not use). tier = crowd signal (3>=50K likes, 2>=20K, 1>0, 0 new/unranked); occurrences = cross-page recurrence; computed_styles from HSL stats; flags from objective gates (CB-COLLISION-RISK / SLOP-SIGNATURE / NARROW-LIGHTNESS). Gates reject only broken architecture, never judge beauty — final judgment happens in context at use time.",
+  "description": "Curated palettes harvested from public palette community charts (trending/popular/latest, 48 each; style-filter URLs proved to be SEO fallback clones of popular — do not use). tier = crowd signal (3>=50K likes, 2>=20K, 1>0, 0 new/unranked); occurrences = cross-page recurrence; computed_styles from HSL stats; flags from objective gates (CB-COLLISION-RISK / SLOP-SIGNATURE / NARROW-LIGHTNESS). Gates reject only broken architecture, never judge beauty — final judgment happens in context at use time.",
   "harvested": "2026-10-15",
   "counts": {
    "kept": 117,

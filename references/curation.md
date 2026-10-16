@@ -10,7 +10,7 @@
 
 ### 第 1 层:人群信号(谁选的?)
 
-- 数据只收 **coolors 官方榜单页**:trending / popular / latest(各 48,站方排序即大众投票结果)。
+- 数据只收 **源站官方榜单页**:trending / popular / latest(各 48,站方排序即大众投票结果)。
 - **点赞分层(tier)**:★★★ ≥50K、★★ ≥20K、★ >0、new=0。likes 是"被收藏欲"——万人收藏不代表适配你的医学图表,但它筛掉了大多数新手垃圾。
 - **跨页重复(occurrences)**:同一调色板同时上 trending 和 popular = 更稳定的背书;只出现一次的新板标 new 降权。
 
@@ -35,17 +35,17 @@
 ## 扩库流水线
 
 ```bash
-# 1. 收割(浏览器配方见 harvest-coolors.md):保存到 coolors-research/
-#    命名:coolors_trending_raw.json / coolors_popular2_raw.json / coolors_latest_raw.json
+# 1. 收割(浏览器配方见 harvest-playbook.md):保存到 palette-research/
+#    命名:trending_raw.json / popular2_raw.json / latest_raw.json
 # 2. 重建库(去重+质量门+分层,写入 skill 的 palettes/palettes.json):
 python scripts/build_library.py --raw <收割目录> --out <库文件>
 # 3. 检查输出:kept/rejected 比例、flag 数、覆盖率——拒绝率骤降或 flag 全零都说明门坏了
 ```
 
-库 schema v2 字段:name / hexes / text_hint(coolors 自带的明暗文字标记)/ likes / tier / computed_styles / occurrences / metrics(lightness_span, max_contrast, cb_min_separation)/ flags / sources。
+库 schema v2 字段:name / hexes / text_hint(源站自带的明暗文字标记)/ likes / tier / computed_styles / occurrences / metrics(lightness_span, max_contrast, cb_min_separation)/ flags / sources。
 
 ## 已知边界
 
-- 风格标签是 HSL 统计**计算值**,非站方口径(coolors 的风格过滤 URL 是 SEO 克隆页,拿不到官方标签——见 harvest 坑⑤)。
+- 风格标签是 HSL 统计**计算值**,非站方口径(源站的风格过滤 URL 是 SEO 克隆页,拿不到官方标签——见 harvest 坑⑤)。
 - 匿名状态下每排序页固定 48 张,分页参数被忽略;总池≈144,去重后 ~116。要更多需登录态或换数据源(未验证)。
 - latest 页多为无名新板(tier=new),作新鲜度补充,不作主力。

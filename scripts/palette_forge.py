@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""palette_forge.py — offline palette engine distilled from coolors.co mechanics.
+"""palette_forge.py — offline palette engine distilled from public palette community mechanics.
 
 Commands:
   harmony   generate a palette from a seed color using a harmony rule (OKLCH)
@@ -160,7 +160,7 @@ def wcag_verdict(ratio, large=False):
 
 
 def readable_text(bg):
-    """coolors is-light equivalent: pick black or white text per WCAG."""
+    """palette-site is-light equivalent: pick black or white text per WCAG."""
     if contrast_ratio("000000", bg) >= contrast_ratio("FFFFFF", bg):
         return "000000"
     return "FFFFFF"
