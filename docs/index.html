@@ -11,13 +11,23 @@
     --paper:#F6F2E8; --panel:#FDF7EE; --ink:#3D405B; --muted:#5E6472;
     --coral:#E07066; --coralsoft:#FFA69E; --mint:#B8F2E6; --mist:#AED9E0;
     --bronze:#BC6C25; --line:#E2DACA;
+    --sans:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --serif:Georgia,"Times New Roman","Songti SC","STSong","SimSun",serif;
   }
   *{box-sizing:border-box; margin:0; padding:0}
   html{scroll-behavior:smooth}
-  body{background:var(--paper); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; line-height:1.55}
+  body{background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.7}
   .wrap{max-width:1060px; margin:0 auto; padding:0 28px}
   body[data-lang="en"] .l-zh{display:none !important}
   body[data-lang="zh"] .l-en{display:none !important}
+  /* 中文态:衬线标题(宋体族,与英文 Georgia 同气质)+微字距 */
+  body[data-lang="zh"] .hero h1{font-family:var(--serif); font-weight:900; letter-spacing:0.02em}
+  body[data-lang="zh"] .sec-head h2{font-family:var(--serif)}
+  body[data-lang="zh"] .install h2{font-family:var(--serif)}
+  body[data-lang="zh"] .card h3{font-family:var(--serif); letter-spacing:0.02em}
+  body[data-lang="zh"] .step h4{letter-spacing:0.04em}
+  body[data-lang="zh"] .kicker{letter-spacing:0.08em; text-transform:none}
+  body[data-lang="zh"] .hero p{font-size:17.5px}
 
   /* ── topbar ── */
   .top{border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--paper); z-index:40}
