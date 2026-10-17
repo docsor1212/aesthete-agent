@@ -1,5 +1,5 @@
 ---
-version: 0.5.0
+version: 0.6.0
 name: aesthete-agent
 description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 87-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words — color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
 ---
@@ -140,6 +140,8 @@ On user rejection, run a **necropsy** first (write the transferable failure mode
 | `references/anti-slop.md` | AI-slop bans and evidence chain |
 | `references/curation.md` | Selection methodology + library-growth pipeline |
 | `references/harvest-playbook.md` | source harvesting recipe (5 field-tested traps) |
+| `references/responsive.md` | Mobile pass for showcase/landing pages: nav never display:none, auto-height bar, fixed-canvas horizontal gallery, grid min(100%), overflow locating snippet |
+| `references/cjk-typography.md` | CJK pages: full font stacks, serif headline rules (no orphan lines, synthesized/real weight), text-autospace/spacing-trim, subset webfont via `scripts/make_cjk_subset.py` |
 
 ## Selection methodology
 

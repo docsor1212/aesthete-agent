@@ -73,5 +73,51 @@ class TestGradientBan(unittest.TestCase):
         os.unlink(out)
 
 
+
+class TestCjkSubsetScript(unittest.TestCase):
+    """CJK title-subset builder: contract + graceful skip without fonttools."""
+
+    def test_script_present_and_contract(self):
+        p = os.path.join(ROOT, "scripts", "make_cjk_subset.py")
+        self.assertTrue(os.path.isfile(p))
+        src = open(p, encoding="utf-8").read()
+        self.assertIn("DEFAULT_PUNCT", src)
+        self.assertIn("SourceHanSerifCN", src)
+        self.assertIn("font-display:swap", src)
+        self.assertNotIn("palette-" + "forge", src)  # 旧名字面不落地(合规grep扫tests)
+
+    def test_subset_build_or_graceful_skip(self):
+        out = os.path.join(TMP, "t.woff2")
+        r = run([os.path.join(ROOT, "scripts", "make_cjk_subset.py"),
+                 "--text", "排印验证", "--out", out])
+        if r.returncode == 2:
+            self.assertIn("fonttools", r.stderr)  # no fonttools: graceful skip
+            return
+        # no local font file either: friendly pointer, exit 1 (not a crash)
+        if r.returncode == 1:
+            self.assertIn("Font file not found", r.stderr)
+            return
+        self.assertEqual(r.returncode, 0)
+        if os.path.isfile(out):
+            self.assertGreater(os.path.getsize(out), 1000)
+            os.unlink(out)
+
+    def test_references_responsive_doc(self):
+        p = os.path.join(ROOT, "references", "responsive.md")
+        self.assertTrue(os.path.isfile(p))
+        doc = open(p, encoding="utf-8").read()
+        for must in ("display:none", "min-width:920px", "min(100%", "scrollWidth", "何时读我", "回 INDEX"):
+            self.assertIn(must, doc)
+
+    def test_references_cjk_doc(self):
+        p = os.path.join(ROOT, "references", "cjk-typography.md")
+        self.assertTrue(os.path.isfile(p))
+        doc = open(p, encoding="utf-8").read()
+        for must in ("PingFang SC", "Microsoft YaHei", "text-autospace",
+                     "text-spacing-trim", "<br>", "67KB"):
+            self.assertIn(must, doc)
+
+
+
 if __name__ == "__main__":
     unittest.main()
