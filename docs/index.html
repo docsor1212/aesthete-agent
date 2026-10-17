@@ -20,11 +20,21 @@
   .wrap{max-width:1060px; margin:0 auto; padding:0 28px}
   body[data-lang="en"] .l-zh{display:none !important}
   body[data-lang="zh"] .l-en{display:none !important}
-  /* 中文态:衬线标题(宋体族,与英文 Georgia 同气质)+微字距 */
-  body[data-lang="zh"] .hero h1{font-family:var(--serif); font-weight:900; letter-spacing:0.05em; line-height:1.18; -webkit-text-stroke:0.9px currentColor}
-  body[data-lang="zh"] .sec-head h2{font-family:var(--serif); letter-spacing:0.04em; -webkit-text-stroke:0.5px currentColor}
-  body[data-lang="zh"] .install h2{font-family:var(--serif); -webkit-text-stroke:0.5px currentColor}
-  body[data-lang="zh"] .card h3{font-family:var(--serif); letter-spacing:0.02em}
+  /* 中文态:衬线标题——真字重思源宋体子集(OFL-1.1,67 字符 23KB/枚,font-display swap 宋体兜底) */
+  @font-face{
+    font-family:"CJK Serif Black";
+    src:url("fonts/cjk-title-black.woff2") format("woff2");
+    font-display:swap; font-weight:900;
+  }
+  @font-face{
+    font-family:"CJK Serif Bold";
+    src:url("fonts/cjk-title-bold.woff2") format("woff2");
+    font-display:swap; font-weight:700;
+  }
+  body[data-lang="zh"] .hero h1{font-family:"CJK Serif Black",var(--serif); font-weight:900; letter-spacing:0.05em; line-height:1.18}
+  body[data-lang="zh"] .sec-head h2{font-family:"CJK Serif Bold",var(--serif); font-weight:700; letter-spacing:0.04em}
+  body[data-lang="zh"] .install h2{font-family:"CJK Serif Bold",var(--serif); font-weight:700}
+  body[data-lang="zh"] .card h3{font-family:"CJK Serif Bold",var(--serif); font-weight:700; letter-spacing:0.02em}
   body[data-lang="zh"] .step h4{letter-spacing:0.04em}
   body[data-lang="zh"] .kicker{letter-spacing:0.18em; text-transform:none}
   body[data-lang="zh"] .hero p{font-size:17.5px; letter-spacing:0.01em}
