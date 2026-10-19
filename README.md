@@ -8,14 +8,14 @@
 
 [![install](https://img.shields.io/badge/install-npx%20skills%20add%20docsor1212%2Faesthete--agent-blue)](https://github.com/docsor1212/aesthete-agent)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![palette library](https://img.shields.io/badge/palette%20library-117%20curated-orange)](#the-evidence-library)
+[![palette library](https://img.shields.io/badge/palette%20library-118%20curated-orange)](#the-evidence-library)
 [![tests](https://img.shields.io/badge/tests-39%20passing-brightgreen)](tests/)
 
 ## Why
 
 LLMs choose colors badly for measurable reasons: they treat hex codes as text, they regress to the median of their training data (the frontend-tutorial median is purple/indigo), and they cannot see the colors they emit. `aesthete-agent` fixes this the engineering way — **outsource taste to process**:
 
-- an **evidence library** of 117 curated palettes filtered by objective quality gates (flat lightness → rejected; no readable text pair → rejected; color-blind collisions / slop signatures → flagged),
+- an **evidence library** of 118 curated palettes filtered by objective quality gates (flat lightness → rejected; no readable text pair → rejected; color-blind collisions / slop signatures → flagged),
 - **mechanical gates** on every decision: a 5-dimension scorecard, exact WCAG 2.2 boundaries (APCA optional), three color-blindness simulations, AI-slop signature detection, a gradient ban (any gradient = P0), and an HTML delivery linter,
 - a **six-step method** (manifesto → register check → source → roles → validate → five-lens review) that turns "make it pretty" into a reproducible pipeline,
 - a **preference profile** (`profile.json`) that learns from every accept/reject verdict and mechanically down-ranks what the user rejects.
@@ -93,7 +93,7 @@ Full method (manifesto → register → source → roles → validate → five-l
 | Area | Highlights |
 |---|---|
 | Engine (24 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house |
-| Evidence library | 117 curated palettes with like tiers, computed style tags, gate flags |
+| Evidence library | 118 curated palettes with like tiers, computed style tags, gate flags |
 | Scene visualizer | 10 real front-end scene types × any palette, light and dark, `--variants` for A/B, `--svg` slot-list recoloring |
 | Theme packs | 8 named packs (colors + fonts + voice + use-when), all with provenance |
 | Quality gates | exit-code enforced: scorecard, contrast, blind collisions, slop, HTML lint (**gradient ban: any gradient = P0**), `report` one-verdict aggregator |

@@ -54,7 +54,7 @@ def _tool(fn):
 
 
 def palette_match_impl(brief: str, limit: int = 6, no_flags: bool = False) -> str:
-    """Rank the 89-palette evidence library for a natural-language brief.
+    """Rank the 118-palette evidence library for a natural-language brief.
     Auto-detects register, applies learned preference penalties, sorts by endorsement tiers."""
     args = ["match", "--brief", brief, "--limit", str(limit)]
     if no_flags:
@@ -152,6 +152,31 @@ def palette_visualize_impl(palette: str, out: str = "visualizer.html", theme: st
     return text
 
 
+def palette_directions_impl(brief: str = "", registers: str = "", n: int = 3,
+                            out_dir: str = "directions") -> str:
+    """Cross-register design directions: whole-page candidates from different register
+    families side by side (difference enforced), each with metadata + a pick-back sentence."""
+    args = ["directions", "--n", str(n), "--out-dir", out_dir]
+    if registers:
+        args += ["--registers", registers]
+    elif brief:
+        args += ["--brief", brief]
+    ok, text = _call_engine(args)
+    return text
+
+
+def palette_evidence_impl(page: str, palette: str, render: str = "", out: str = "") -> str:
+    """Evidence dossier for a finished page: four mechanical gates + static lint
+    (+ optional render-probe JSON) aggregated into one PASS/FAIL verdict record."""
+    args = ["evidence", page, "--palette", palette]
+    if render:
+        args += ["--render", render]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
 if FastMCP is not None:
     mcp = FastMCP("aesthete-agent")
 
@@ -168,6 +193,8 @@ if FastMCP is not None:
     _tool(palette_slop_impl)
     _tool(palette_visualize_impl)
     _tool(palette_report_impl)
+    _tool(palette_directions_impl)
+    _tool(palette_evidence_impl)
 
 
 
@@ -198,6 +225,12 @@ _STDIO_TOOLS = [
      {"palette": {"type": "string"}, "out": {"type": "string"}, "theme": {"type": "string"}}, ["palette"]),
     ("palette_report", "One-shot acceptance artifact: 4 mechanical gates, PASS/FAIL",
      {"palette": {"type": "string"}}, ["palette"]),
+    ("palette_directions", "Cross-register whole-page design directions with pick-back sentences",
+     {"brief": {"type": "string"}, "registers": {"type": "string"}, "n": {"type": "number"},
+      "out_dir": {"type": "string"}}, []),
+    ("palette_evidence", "Evidence dossier: 4 gates + lint (+render probe) for a finished page",
+     {"page": {"type": "string"}, "palette": {"type": "string"}, "render": {"type": "string"},
+      "out": {"type": "string"}}, ["page", "palette"]),
 ]
 
 
@@ -216,6 +249,11 @@ def _stdio_serve():
         "palette_export": lambda a: palette_export_impl(a.get("palette", ""), a.get("fmt", "css")),
         "palette_slop": lambda a: palette_slop_impl(a.get("palette", "")),
         "palette_visualize": lambda a: palette_visualize_impl(a.get("palette", ""), a.get("out", "visualizer.html"), a.get("theme", "")),
+        "palette_report": lambda a: palette_report_impl(a.get("palette", "")),
+        "palette_directions": lambda a: palette_directions_impl(
+            a.get("brief", ""), a.get("registers", ""), int(a.get("n", 3)), a.get("out_dir", "directions")),
+        "palette_evidence": lambda a: palette_evidence_impl(
+            a.get("page", ""), a.get("palette", ""), a.get("render", ""), a.get("out", "")),
     }
     tools = [{"name": n, "description": (d.strip() if d else n),
               "inputSchema": {"type": "object", "properties": props, "required": req}}
@@ -243,7 +281,7 @@ def _stdio_serve():
         if method == "initialize":
             respond(mid, {"protocolVersion": msg.get("params", {}).get("protocolVersion", "2025-06-18"),
                           "capabilities": {"tools": {}},
-                          "serverInfo": {"name": "aesthete-agent-mcp", "version": "0.4.0"}})
+                          "serverInfo": {"name": "aesthete-agent-mcp", "version": "0.7.0"}})
         elif method == "notifications/initialized" or mid is None:
             continue
         elif method == "ping":
@@ -273,7 +311,7 @@ def main(argv=None):
     if a.check:
         ok, text = _call_engine(["selftest"])
         print("engine selftest:", "OK" if ok else "FAIL")
-        print("tools exposed:", 13 if FastMCP is not None else 0, "(fastmcp",
+        print("tools exposed:", 15 if FastMCP is not None else 0, "(fastmcp",
               "available)" if FastMCP is not None else "NOT installed — impl-only mode)")
         return 0 if ok else 1
     if FastMCP is None or a.stdio:

@@ -1,7 +1,7 @@
 ---
-version: 0.6.0
+version: 0.7.2
 name: aesthete-agent
-description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 87-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words — color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
+description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 118-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words — color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
 ---
 
 # aesthete-agent — Frontend Aesthetics Engine
@@ -20,7 +20,7 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 
 | Capability | Does | Does not | Deep dive |
 |---|---|---|---|
-| Library match/search | Rank an 87-palette evidence library by register + likes tiers + objective gates | Does not judge "subjective beauty" — final verdict is in-context | curation.md |
+| Library match/search | Rank an 118-palette evidence library by register + likes tiers + objective gates | Does not judge "subjective beauty" — final verdict is in-context | curation.md |
 | Generate harmony / ramp / mutate | OKLCH harmony, luminance ramps, perceptual transforms with auto gamut fit | No illustration or gradient-image export | color-theory.md |
 | Extract | Pull dominant colors + shares + readable-text hints from a reference image | No image redraw or matting | — |
 | Roles | bg/text/accent/primary/surface + semantic colors, with contrast checks | Not a layout or type-selection system | craft-rules.md |
@@ -28,6 +28,8 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 | Anti-pattern slop + lint_page | Median-trap/purple-gradient/flat-lightness detection; HTML delivery audit — **any gradient (linear/radial/conic) is a P0 fail: flat color layering only** | Does not cover every aesthetic failure — five-lens screenshots fill the gap | anti-slop.md |
 | Acceptance report | One-shot `report` aggregates contrast / color-blind / AI-slop / scorecard into a single PASS/FAIL JSON (exit code = verdict) for the verdict write-back loop | Not a taste judgment — five-lens screenshots still apply | critique.md |
 | Preview card / showcase / make_variants | Palette cards + mockups; named showcase picks; ≥2-candidate comparison | Not a substitute for a real-environment smoke test | critique.md |
+| Directions (cross-register) | `directions` renders whole-page candidates from different register families side by side — difference is enforced (distinct palettes, ≥2 style tags apart), each with metadata and a pick-back sentence | Not a taste verdict — the user still picks | curation.md |
+| Evidence dossier | `evidence` bundles the four mechanical gates + static lint (+ optional render probe) into one PASS/FAIL JSON and a human-readable record; exit code = verdict | Evidence, not taste — five-lens screenshots still apply | critique.md |
 | Visualizer scenes + SVG recolor | 10 realistic scenes (mobile / landing / dashboard / branding / typography / pattern / chart / product card / email / editorial) with derived roles, legibility gates and a text ladder; SVG recolor via slot inventory (design's own colors mapped by rank, pure black/white kept), `--shuffle N` renders N permutations with a comparison grid | Scene mockups are decision aids, not production UI | critique.md |
 | Learn house + profile.json | Accepted designs join the corpus; preferences (theme/bans/registers) apply mechanically | The learning file IS the config file — see "Verdict write-back" section | curation.md |
 

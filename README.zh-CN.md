@@ -8,14 +8,14 @@
 
 [![install](https://img.shields.io/badge/install-npx%20skills%20add%20docsor1212%2Faesthete--agent-blue)](https://github.com/docsor1212/aesthete-agent)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![palette library](https://img.shields.io/badge/palette%20library-117%20curated-orange)](#实证色板库)
+[![palette library](https://img.shields.io/badge/palette%20library-118%20curated-orange)](#实证色板库)
 [![tests](https://img.shields.io/badge/tests-39%20passing-brightgreen)](tests/)
 
 ## 为什么需要它
 
 大模型配色差，是有可测量原因的：它把 hex 当文本操作；它向训练数据的中位数回退（前端教程的中位数是紫/靛蓝）；它看不见自己输出的颜色。`aesthete-agent` 用工程方式解决——**把品味外包给流程**：
 
-- **实证色板库**：117 块精选色板，全部经过客观质量门过滤（明度平坦 → 拒收；无可读文字对 → 拒收；色盲碰撞 / AI 味签名 → 打旗）；
+- **实证色板库**：118 块精选色板，全部经过客观质量门过滤（明度平坦 → 拒收；无可读文字对 → 拒收；色盲碰撞 / AI 味签名 → 打旗）；
 - **机械闸门**：每个决定都过闸——五维评分卡、精确 WCAG 2.2 边界（可选 APCA）、三色盲模拟、AI 味签名检测、渐变禁令（任何渐变 = P0 一票否决）、HTML 交付体检；
 - **六步法**：宣言 → 语域核对 → 选库 → 角色化 → 验证 → 五镜自审，把"做好看"变成可复现管线；
 - **偏好档案**：`profile.json` 从你每一次接受/否决中学习，被否的方向机械降权。
@@ -93,7 +93,7 @@ python "$S" doctor                                              # 环境体检
 | 领域 | 亮点 |
 |---|---|
 | 引擎（24 个子命令） | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house |
-| 实证色板库 | 117 块精选色板，带点赞分层、风格标签、闸门旗标 |
+| 实证色板库 | 118 块精选色板，带点赞分层、风格标签、闸门旗标 |
 | 场景可视化 | 10 种真实前端场景 × 任意色板，明亮/暗色，`--variants` A/B 对比，`--svg` 槽位清单重着色 |
 | 命名主题包 | 8 个主题（配色 + 字体 + 语气 + 适用域），全部有出处 |
 | 质量闸门 | 退出码强制：评分卡、对比度、色盲碰撞、AI 味、HTML 体检（**渐变禁令：任何渐变 = P0**）、`report` 一键裁决聚合 |

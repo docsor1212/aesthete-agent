@@ -22,6 +22,7 @@ for color-blindness simulation (approximate, severity 1.0).
 """
 import argparse
 import colorsys
+import hashlib
 import json
 import math
 import os
@@ -451,18 +452,22 @@ def _viz_render(ord_hexes, theme, label):
       "    <span style='padding:8px 16px;border-radius:7px;background:%(ink)s;color:%(tink)s;font:600 12px system-ui'>Get started</span>",
       "    <span style='padding:8px 16px;border-radius:7px;border:1px solid %(ink2)s;color:%(ink)s;font:600 12px system-ui;margin-left:6px'>Live demo</span></div>",
       "  <div style='display:flex;gap:8px;padding:0 16px 18px'>",
-      "    <div style='flex:1;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:10px;background:%(surface)s'>",
+      "    <div style='flex:1;border:1px solid %(cardline)s;border-radius:8px;padding:10px;background:%(surface)s'>",
       "      <div style='width:20px;height:20px;border-radius:5px;background:%(honey)s'></div>",
       "      <div style='font:700 11px system-ui;margin-top:6px'>Fast</div>",
-      "      <div style='font:400 10px system-ui;color:%(ink2)s'>Instant checks</div></div>",
-      "    <div style='flex:1;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:10px;background:%(surface)s'>",
+      "      <div style='font:400 10px system-ui;color:%(csub)s'>Instant checks</div></div>",
+      "    <div style='flex:1;border:1px solid %(cardline)s;border-radius:8px;padding:10px;background:%(surface)s'>",
       "      <div style='width:20px;height:20px;border-radius:5px;background:%(sage)s'></div>",
       "      <div style='font:700 11px system-ui;margin-top:6px'>Proven</div>",
-      "      <div style='font:400 10px system-ui;color:%(ink2)s'>WCAG + APCA</div></div></div></div>",
+      "      <div style='font:400 10px system-ui;color:%(csub)s'>WCAG + APCA</div></div></div></div>",
     ])
+    # 0.7.0 修复:暗色下卡片边框换浅线,弱文字(ink2 对 surface <3:1)升级为 ink——暗绿卡片文字不可读旧账
+    csub = R["ink2"] if contrast_ratio(R["ink2"], R["surface"]) >= 3.0 else R["ink"]
     m = {"%(bg)s": R["bg"], "%(surface)s": R["surface"], "%(ink)s": R["ink"], "%(ink2)s": R["ink2"],
          "%(accent)s": R["accent"], "%(honey)s": hexes[2 % len(hexes)], "%(sage)s": sage,
-         "%(tink)s": t_on["ink"], "%(tac)s": t_on["accent"]}
+         "%(tink)s": t_on["ink"], "%(tac)s": t_on["accent"],
+         "%(cardline)s": "rgba(255,255,255,.16)" if theme else "rgba(0,0,0,.08)",
+         "%(csub)s": csub}
     scenes.append(("Landing · 落地页", _fill(tpl, m)))
 
     # S3 Dashboard
@@ -721,6 +726,17 @@ def cmd_visualize(args):
     print("自审: 截图/emitImage 本文件, 按五镜判色在真实版式里是否成立")
 
 
+def _write_visualize_html(hexes, name, dark, out):
+    """单方向整页渲染(directions 用;variant 循环逻辑留在 cmd_visualize)。"""
+    css, sec = _viz_render(list(hexes), dark, "")
+    html = ("<!doctype html><html><head><meta charset='utf-8'><title>Visualizer - " + name + "</title>"
+            "<style>" + css + "</style></head><body><header>"
+            "<h1>Visualizer · <b>" + name + "</b></h1></header>"
+            + sec + "</body></html>")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
 def _fill(tpl, m):
     for k, v in m.items():
         if len(v) == 6 and all(c in "0123456789abcdefABCDEF" for c in v):
@@ -794,7 +810,10 @@ def cmd_report(args):
     rc, out = _run("score", "--palette", ",".join(hexes))
     gates["score"] = {"pass": rc == 0, "detail": out[-160:]}
     verdict = "PASS" if all(g["pass"] for g in gates.values()) else "FAIL"
-    print(json.dumps({"palette": hexes, "gates": gates, "verdict": verdict},
+    # 零模型信任闸:指纹绑定——裁决与输入摘要互锁,验收记录可对账防篡改
+    fp = hashlib.sha256(("aesthete-report/v1|" + ",".join(hexes) + "|" + verdict)
+                        .encode("utf-8")).hexdigest()
+    print(json.dumps({"palette": hexes, "gates": gates, "verdict": verdict, "fingerprint": fp},
                      ensure_ascii=False, indent=2))
     sys.exit(0 if verdict == "PASS" else 1)
 
@@ -1342,6 +1361,7 @@ def cmd_critique(args):
               "## 镜1 构成(待裁决)", "- 视线落点顺序: ____", "- 签名元素唯一: ____", "",
               "## 镜2 信息(待裁决)", "- 数据是否成对出现: ____", "- 删减候选: ____", "",
               "## 镜4 文字(待裁决)", "- 字体声音匹配: ____", "",
+              "## 减法 pass(只删不加)", "- 删了什么: ____", "- 保留红线(对象/依据/状态/主动作)核对: ____", "",
               "## finding ledger", "",
               "```",
               "ledger: <问题1> answered | <问题2> partially(剩X) | <问题3> unresolved(原因)",
@@ -1388,23 +1408,30 @@ BRIEF_KEYWORDS = {
     # 词 → 语域。机械映射,不靠临场发挥;新领域=加词条,不是加散文。
     "medical_teaching": ["教学", "临床", "查房", "医学", "医疗", "指南", "解读", "儿科", "病例", "文献", "患教"],
     "pediatric_cover": ["封面", "儿童", "母婴"],
+    # 前端语域(0.7.0):中文审美口语词 → 板族。"鲜艳"只指向有品位的鲜活——
+    # 无品位的刺眼板带 gate 旗/踩禁词族,排序里 -4 自然沉底,不是这里豁免。
+    "frontend_soft": ["素雅", "清新", "柔和", "温柔", "淡雅", "耐看", "干净", "极简", "简洁", "轻盈"],
+    "frontend_deep": ["大气", "稳重", "高级", "质感", "商务", "沉稳", "典雅", "正式", "深沉"],
+    "frontend_bold": ["鲜艳", "活力", "年轻", "大胆", "撞色", "吸睛", "潮流", "醒目"],
+    "frontend_tech": ["科技", "科技感", "现代", "未来", "理性", "开发者", "程序员", "数据"],
 }
 REGISTER_TAGS = {
     "medical_teaching": ["light", "mid", "warm", "cool", "pastel"],
     "pediatric_cover": ["warm", "vivid", "mid", "pastel"],
+    "frontend_soft": ["light", "pastel", "mid", "cool"],
+    "frontend_deep": ["dark", "mid", "cool", "monochromatic"],
+    "frontend_bold": ["vivid", "warm", "multihue", "mid"],
+    "frontend_tech": ["cool", "monochromatic", "mid", "light"],
 }
 
 
-def cmd_match(args):
-    """brief → 语域 → 库内排序。机制:关键词映射 + 档案惩罚;候选 ≥2 才许往下走。"""
-    prof = load_profile()
+def _load_lib():
     with open(LIBRARY, encoding="utf-8") as f:
-        lib = json.load(f)
-    pals = lib["palettes"]
-    reg = args.register
-    if not reg:
-        hits = {r: sum(1 for k in kws if k in args.brief) for r, kws in BRIEF_KEYWORDS.items()}
-        reg = max(hits, key=hits.get) if max(hits.values()) > 0 else prof.get("default_register", "medical_teaching")
+        return json.load(f)
+
+
+def _ranked_for_register(pals, reg, prof):
+    """语域 → 库内排序(共享于 match/directions;标签命中+loved 加权+暗底惩罚+禁词族沉底)。"""
     want_tags = set(REGISTER_TAGS.get(reg, []))
     pen = prof.get("theme_bias", {}).get("dark_penalty", 0)
     banned = set(prof.get("banned_hex_families", {}).get("tailwind_defaults", []))
@@ -1417,7 +1444,25 @@ def cmd_match(args):
         return (tag_hits + (2 if p["name"] in loved else 0) - dark * pen - slop * 4,
                 p["tier"], p["likes"])
 
-    pals.sort(key=rank, reverse=True)
+    return sorted(pals, key=rank, reverse=True)
+
+
+def _brief_registers(brief):
+    """brief → 命中语域列表(按命中数降序;无命中=空表,由调用方决定回退)。"""
+    hits = {r: sum(1 for k in kws if k in brief) for r, kws in BRIEF_KEYWORDS.items()}
+    return [r for r, n in sorted(hits.items(), key=lambda kv: -kv[1]) if n > 0]
+
+
+def cmd_match(args):
+    """brief → 语域 → 库内排序。机制:关键词映射 + 档案惩罚;候选 ≥2 才许往下走。"""
+    prof = load_profile()
+    pals = _load_lib()["palettes"]
+    reg = args.register
+    if not reg:
+        regs = _brief_registers(args.brief)
+        reg = regs[0] if regs else prof.get("default_register", "medical_teaching")
+    pen = prof.get("theme_bias", {}).get("dark_penalty", 0)
+    pals = _ranked_for_register(pals, reg, prof)
     if args.no_flags:
         pals = [p for p in pals if not p["flags"]]
     print(f"register={reg}  theme_penalty_dark={pen}  candidates={len(pals)}")
@@ -1427,6 +1472,179 @@ def cmd_match(args):
         print(f"{stars:4s}{p['likes']:>7,}  {p['name']}  [{' '.join(p['computed_styles'])}]{fl}")
         print(f"           {' '.join(p['hexes'])}")
     print("纪律:取 ≥2 候选走 card/showcase 对比后定;被否决的裁决写回 profile.json(机制,不是记忆)。")
+
+
+def cmd_directions(args):
+    """跨语域方向对比:不同语域族各取头牌,整页渲染并排 + 元数据栏 + 选择回传句。
+    差异铁律:方向间色板必须不同、标签差 ≥2——同板换排列不算方向。"""
+    prof = load_profile()
+    pals = _load_lib()["palettes"]
+    regs = [r.strip() for r in args.registers.split(",")] if args.registers else _brief_registers(args.brief)
+    if args.registers:
+        bad = [r for r in regs if r not in BRIEF_KEYWORDS]
+        if bad:
+            print(f"未知语域: {','.join(bad)}——可选: {','.join(BRIEF_KEYWORDS)}", file=sys.stderr)
+            sys.exit(2)
+    if not regs:
+        regs = [prof.get("default_register", "medical_teaching")]
+    n = max(2, min(args.n, 4))
+    if len(regs) < n:
+        for r in ("frontend_soft", "frontend_deep", "frontend_bold", "frontend_tech",
+                  "medical_teaching", "pediatric_cover"):
+            if r not in regs:
+                regs.append(r)
+            if len(regs) >= n:
+                break
+    regs = regs[:n]
+    dirs = []
+    for reg in regs:
+        ranked = _ranked_for_register([p for p in pals if not p["flags"]], reg, prof) or \
+                 _ranked_for_register(pals, reg, prof)
+        if not ranked:
+            continue
+        pick = ranked[0]
+        for p in ranked:  # 差异铁律:与已选方向同板或标签差 <2 的跳到下一块
+            if any(p["hexes"] == d["hexes"] or
+                   len(set(p["computed_styles"]) ^ set(d["styles"])) < 2 for d in dirs):
+                continue
+            pick = p
+            break
+        dirs.append({"register": reg, "name": pick["name"], "hexes": pick["hexes"],
+                     "styles": pick["computed_styles"]})
+    if len(dirs) < 2:
+        print("方向不足 2 个——语域词表太窄或库太浅,先加词条/加板", file=sys.stderr)
+        sys.exit(1)
+    outdir = args.out_dir or "."
+    os.makedirs(outdir, exist_ok=True)
+    cells = []
+    letters = "ABCDEFGH"
+    for i, d in enumerate(dirs):
+        dark = "dark" in d["styles"]
+        fname = os.path.join(outdir, f"direction_{letters[i]}.html")
+        _write_visualize_html(d["hexes"], f"{letters[i]} · {d['name']}", dark, fname)
+        best = max((contrast_ratio(a, b) for j, a in enumerate(d["hexes"])
+                    for b in d["hexes"][j + 1:]), default=1)
+        echo = (f"就用方向 {letters[i]}「{d['name']}」:色板 {','.join('#' + h for h in d['hexes'])}。"
+                f"按 60-30-10 出页面,再过 report 四道检查。")
+        echo_js = echo.replace("\\", "\\\\").replace("'", "\\'").replace('"', "&quot;")
+        chips = "".join(f"<span class='hx' style='background:#{h}'></span>" for h in d["hexes"])
+        cells.append(f"""
+  <div class="cell">
+    <div class="cap"><b>方向 {letters[i]} · {d['name']}</b>
+      <span>{d['register']} · [{' '.join(d['styles'])}] · 最优对比 {best:.2f}:1</span></div>
+    <div class="meta">{chips}<span class="hexlist">{' '.join('#' + h for h in d['hexes'])}</span></div>
+    <iframe src="{os.path.basename(fname)}" loading="lazy"></iframe>
+    <div class="pick"><button onclick="pick(this)" data-say="{echo_js}">选它 — 复制回传句</button></div>
+  </div>""")
+    html = f"""<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<title>方向对比 — pick one</title><style>
+  body{{margin:0;background:#20242B;font-family:system-ui;color:#E8EEF6}}
+  header{{padding:18px 26px;font-size:15px;letter-spacing:.08em;
+         border-bottom:1px solid rgba(255,255,255,.12)}}
+  header b{{color:#F2CC8F}}
+  .grid{{display:grid;grid-template-columns:repeat({min(len(cells), 2)},1fr);gap:14px;padding:14px}}
+  .cell{{border:1px solid rgba(255,255,255,.14);border-radius:8px;overflow:hidden}}
+  .cap{{display:flex;justify-content:space-between;gap:8px;padding:9px 14px;font-size:13px;
+       background:rgba(255,255,255,.06)}}
+  .cap span{{opacity:.55;font-family:monospace;font-size:11px;text-align:right}}
+  .meta{{display:flex;align-items:center;gap:4px;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,.08)}}
+  .hx{{width:22px;height:22px;border-radius:5px;display:inline-block;border:1px solid rgba(255,255,255,.25)}}
+  .hexlist{{margin-left:auto;font:11px monospace;opacity:.6}}
+  iframe{{width:100%;height:72vh;border:0;display:block;background:#fff}}
+  .pick{{padding:8px 14px;background:rgba(255,255,255,.06)}}
+  button{{background:#F2CC8F;color:#20242B;border:0;border-radius:6px;padding:6px 14px;
+         font:600 12px system-ui;cursor:pointer}}
+  #say{{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);max-width:80vw;
+       background:#F2CC8F;color:#20242B;padding:10px 16px;border-radius:8px;font:13px system-ui;
+       display:none;white-space:pre-wrap}}
+</style></head><body>
+<header>方向对比 —— 语域不同才是方向不同;点「选它」把回传句发给智能体,<b>不要替用户决定</b></header>
+<div class="grid">{''.join(cells)}
+</div><div id="say"></div>
+<script>
+function pick(btn){{
+  var s = btn.getAttribute('data-say');
+  var box = document.getElementById('say');
+  box.textContent = s; box.style.display = 'block';
+  if (navigator.clipboard) {{ navigator.clipboard.writeText(s).catch(function(){{}}); }}
+  clearTimeout(box._t); box._t = setTimeout(function(){{ box.style.display = 'none'; }}, 6000);
+}}
+</script></body></html>"""
+    cpath = os.path.join(outdir, "directions.html")
+    with open(cpath, "w", encoding="utf-8") as f:
+        f.write(html)
+    for d in dirs:
+        print(f"  方向 {d['register']}: {d['name']}  [{' '.join(d['hexes'])}]")
+    print(f"方向对比页: {cpath}({len(dirs)} 个跨语域方向,整页见 direction_{letters[0]}..{letters[len(dirs)-1]}.html)")
+    print("纪律:把对比页给用户点名;用户点名后,把回传句原样作为下一步指令。")
+
+
+def cmd_evidence(args):
+    """页面证据卷宗:静态 lint + 四闸 report(+可选渲染探针)合成一份 JSON + 一份人读 HTML。
+    退出码 = 裁决(任一闸 FAIL 即非零)。交付前跑一次,卷宗即验收记录。"""
+    page = args.page
+    if not os.path.exists(page):
+        print(f"文件不存在: {page}", file=sys.stderr)
+        sys.exit(2)
+    hexes = [h.upper() for h in palette_list(args.palette)]
+    here = os.path.dirname(os.path.abspath(__file__))
+    ev = {"page": os.path.abspath(page), "palette": hexes, "render": None}
+
+    rep = subprocess.run([sys.executable, os.path.abspath(__file__), "report", "--palette", ",".join(hexes)],
+                         capture_output=True, text=True)
+    _out = rep.stdout.strip()
+    _i = _out.find("{")
+    try:
+        ev["report"] = json.loads(_out[_i:]) if _i >= 0 else {}
+    except Exception:
+        ev["report"] = {"error": (_out or rep.stderr)[-400:]}
+    lint_cmd = [sys.executable, os.path.join(here, "lint_page.py"), page, "--palette", ",".join(hexes)]
+    if args.render:
+        lint_cmd += ["--render", args.render]
+        try:
+            ev["render"] = json.load(open(args.render, encoding="utf-8"))
+        except Exception:
+            pass
+    lint = subprocess.run(lint_cmd, capture_output=True, text=True)
+    ev["lint"] = {"exit": lint.returncode, "output": (lint.stdout + lint.stderr).strip()[-2000:]}
+
+    rj = ev.get("report") or {}
+    verdict = rj.get("verdict", "FAIL" if rj.get("error") else "UNKNOWN")
+    ev["verdict"] = "PASS" if (verdict == "PASS" and lint.returncode == 0) else "FAIL"
+    # 零模型信任闸:页面字节+声明色板+裁决 摘要互锁,验收记录可对账防篡改
+    page_fp = hashlib.sha256(open(page, "rb").read()).hexdigest()
+    ev["fingerprint"] = hashlib.sha256(
+        ("aesthete-evidence/v1|" + ",".join(hexes) + "|" + page_fp + "|" + ev["verdict"])
+        .encode("utf-8")).hexdigest()
+    ev["page_sha256"] = page_fp
+    base = args.out or (os.path.splitext(page)[0] + ".evidence")
+    with open(base + ".json", "w", encoding="utf-8") as f:
+        json.dump(ev, f, ensure_ascii=False, indent=1)
+    ok = ev["verdict"] == "PASS"
+    bar_color, bar_txt = ("#3D8361", "PASS — 四闸 + 静态审计全过") if ok else ("#B04A3A", "FAIL — 有闸未过,禁止交付")
+    gates = rj.get("gates", {})
+    gate_rows = "".join(
+        f"<tr><td>{k}</td><td style='color:{'#3D8361' if v.get('pass') else '#B04A3A'}'>"
+        f"{'PASS' if v.get('pass') else 'FAIL'}</td><td><code>{v.get('best') or v.get('detail') or ''}</code></td></tr>"
+        for k, v in gates.items())
+    html = f"""<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>证据卷宗 — {os.path.basename(page)}</title>
+<style>body{{margin:0;font:14px/1.6 system-ui;background:#F6F2E8;color:#3D405B}}
+header{{padding:18px 26px;background:{bar_color};color:#fff}}
+h1{{margin:0;font-size:17px}} table{{border-collapse:collapse;width:100%;background:#fff}}
+td,th{{border:1px solid #E2DCCB;padding:7px 12px;text-align:left;font-size:13px}}
+th{{background:#EFE9D8}} code{{font-size:12px}} pre{{background:#fff;border:1px solid #E2DCCB;
+padding:12px;white-space:pre-wrap;font-size:12px}}</style></head><body>
+<header><h1>证据卷宗 · {os.path.basename(page)} — {bar_txt}</h1></header>
+<div style="padding:16px 26px">
+<p>声明色板:{' '.join('#' + h for h in hexes)}　页面:<code>{os.path.abspath(page)}</code></p>
+<h3>四道机械闸</h3><table><tr><th>闸</th><th>裁决</th><th>证据</th></tr>{gate_rows}</table>
+<h3>静态审计(lint_page)</h3><pre>{ev['lint']['output'] or '(无输出)'}</pre>
+{('<h3>渲染证据(render_probe)</h3><pre>' + json.dumps(ev['render'], ensure_ascii=False, indent=1)[:1200] + '</pre>') if ev['render'] else '<p>渲染探针未采集——用浏览器工具执行 render_probe.js 后以 --render 传入,卷宗补渲染事实。</p>'}
+</div></body></html>"""
+    with open(base + ".html", "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"证据卷宗: {base}.json + {base}.html — 裁决 {ev['verdict']}")
+    sys.exit(0 if ok else 1)
 
 
 def cmd_card(args):
@@ -1642,11 +1860,25 @@ def main():
     s.set_defaults(fn=cmd_house)
 
     s = sub.add_parser("match")
-    s.add_argument("--brief", required=True, help="需求自然语言,如:儿科教学页/母婴封面/文献解读课件")
+    s.add_argument("--brief", required=True, help="需求自然语言,如:儿科教学页/素雅落地页/母婴封面")
     s.add_argument("--register", choices=list(BRIEF_KEYWORDS.keys()), default=None)
     s.add_argument("--no-flags", action="store_true")
     s.add_argument("--limit", type=int, default=6)
     s.set_defaults(fn=cmd_match)
+
+    s = sub.add_parser("directions")
+    s.add_argument("--brief", default="", help="需求自然语言,如:素雅耐看的落地页")
+    s.add_argument("--registers", default=None, help="逗号分隔语域,显式指定时跳过 brief")
+    s.add_argument("--n", type=int, default=3, help="方向数 2-4")
+    s.add_argument("--out-dir", default=None)
+    s.set_defaults(fn=cmd_directions)
+
+    s = sub.add_parser("evidence")
+    s.add_argument("page", help="已完成的页面 HTML")
+    s.add_argument("--palette", required=True, help="声明色板,逗号分隔 hex")
+    s.add_argument("--render", default=None, help="render_probe.js 采集的 evidence.json(可选)")
+    s.add_argument("--out", default=None, help="输出前缀(默认 <page>.evidence)")
+    s.set_defaults(fn=cmd_evidence)
 
     s = sub.add_parser("card")
     s.add_argument("--palette", required=True)

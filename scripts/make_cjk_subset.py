@@ -32,6 +32,8 @@ SOURCE_HAN_SERIF_CN = {
 }
 DOWNLOAD_URL = ("https://github.com/adobe-fonts/source-han-serif/releases/download/"
                 "2.003R/09_SourceHanSerifCN.zip")
+# 命名对照:Adobe 思源宋最重字重叫 Heavy;Google/Noto 侧同源字重叫 Black(≈900)。
+# 文档/下载链接互指时注意别名——Noto CJK 没有 "Heavy" 这个字重名。
 
 DEFAULT_PUNCT = "，。：；！？·—｜、（）「」『』“”‘’…"
 
