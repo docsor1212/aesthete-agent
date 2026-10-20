@@ -828,6 +828,20 @@ def palette_list(s):
     return [h for h in (x.strip() for x in s.replace("#", ",").split(",")) if h]
 
 
+def _theme_hexes(name):
+    """主题名 → hex 列表;不存在 exit 2(带可选清单)。tokens/scene/scaffold 同源。"""
+    tpath = os.path.join(os.path.dirname(os.path.abspath(LIBRARY)), "themes.json")
+    with open(tpath, encoding="utf-8") as f:
+        td = json.load(f)
+    ts = td["themes"] if isinstance(td, dict) else td
+    rec = next((t for t in ts if t.get("name_en") == name or t["name"] == name), None)
+    if rec is None:
+        print(f"主题不存在: {name}——可选: " +
+              ", ".join(t.get("name_en", t["name"]) for t in ts), file=sys.stderr)
+        sys.exit(2)
+    return [v.lstrip("#").upper() for v in rec["colors"].values()]
+
+
 def cmd_harmony(args):
     L, C, H = oklch_from_hex(args.base)
     modes = {
@@ -1766,6 +1780,63 @@ padding:12px;white-space:pre-wrap;font-size:12px}}</style></head><body>
     sys.exit(0 if ok else 1)
 
 
+def cmd_tokens(args):
+    """设计令牌表(0.9):色板/主题 → 语义 token(CSS+JSON)。
+    墨色自动调墨,accent 拆图形/文字双 token,数值注释即证据;指纹互锁。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import token_sheet
+    except ImportError as e:
+        print(f"缺 token_sheet: {e}", file=sys.stderr)
+        sys.exit(2)
+    if args.theme:
+        hexes = _theme_hexes(args.theme)
+    elif args.palette:
+        hexes = [h.upper().lstrip("#") for h in palette_list(args.palette)]
+    else:
+        print("--theme 或 --palette 必给其一(≥3 色)", file=sys.stderr)
+        sys.exit(2)
+    if len(hexes) < 3:
+        print("至少 3 色", file=sys.stderr)
+        sys.exit(2)
+    payload, rc = token_sheet.emit(
+        hexes, args.name or args.theme or "palette", args.brand or "",
+        dark=bool(args.dark), out_base=args.out or "tokens")
+    print(f"tokens: {(args.out or 'tokens')}.css + .json — 裁决 {payload['verdict']}")
+    for k, v in payload["ratios"].items():
+        print(f"  {k} = {v:.2f}:1")
+    if payload["problems"]:
+        print("未达标: " + "; ".join(payload["problems"]), file=sys.stderr)
+    print("下一步: tokens.css 供页面直接引用;交付前 aesthete_report/evidence 验收")
+    sys.exit(rc)
+
+
+def cmd_audit(args):
+    """外部页面机械审计(0.9):漂移带最近板色/对比对带达标替换值/禁渐变/紫域大底/
+    AI 默认签名;P0 存在或 P1≥2 = FAIL。静态范围如实声明(外链 CSS 用 render probe 补)。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import page_audit
+    except ImportError as e:
+        print(f"缺 page_audit: {e}", file=sys.stderr)
+        sys.exit(2)
+    if not os.path.exists(args.page):
+        print(f"文件不存在: {args.page}", file=sys.stderr)
+        sys.exit(2)
+    pal = palette_list(args.palette) if args.palette else None
+    payload = page_audit.run(args.page, pal, floor=args.floor, out_base=args.out)
+    n = payload["counts"]
+    print(f"audit: {os.path.basename(args.page)} — 裁决 {payload['verdict']} "
+          f"(P0×{n['P0']} P1×{n['P1']} P2×{n['P2']})")
+    for f in payload["findings"]:
+        print(f"[{f['sev']}] {f['msg']}")
+        print(f"      ↳ {f['fix']}")
+    if not payload["findings"]:
+        print("[OK] 未发现机械问题;视觉层(视线顺序/密度/构图)仍需五镜截图自审")
+    print(f"指纹: {payload['fingerprint'][:16]}…  范围: {payload['scope']}")
+    sys.exit(0 if payload["verdict"] != "FAIL" else 1)
+
+
 def cmd_card(args):
     hexes = palette_list(args.palette)
     name = args.name or "Palette"
@@ -2023,6 +2094,22 @@ def main():
     s.add_argument("--render", default=None, help="render_probe.js 采集的 evidence.json(可选)")
     s.add_argument("--out", default=None, help="输出前缀(默认 <page>.evidence)")
     s.set_defaults(fn=cmd_evidence)
+
+    s = sub.add_parser("tokens")
+    s.add_argument("--palette", default=None, help="色板,逗号分隔 hex")
+    s.add_argument("--theme", default=None, help="主题包名(与 --palette 二选一)")
+    s.add_argument("--name", default=None, help="令牌表名(写入注释头)")
+    s.add_argument("--brand", default=None, help="品牌名(写入注释)")
+    s.add_argument("--dark", action="store_true", help="深色为主(令牌明暗互换)")
+    s.add_argument("--out", default=None, help="输出前缀(默认 tokens)")
+    s.set_defaults(fn=cmd_tokens)
+
+    s = sub.add_parser("audit")
+    s.add_argument("page", help="外部页面 HTML")
+    s.add_argument("--palette", default=None, help="声明色板(给出即查漂移)")
+    s.add_argument("--floor", type=float, default=12, help="字号下限 px")
+    s.add_argument("--out", default=None, help="JSON 输出前缀")
+    s.set_defaults(fn=cmd_audit)
 
     s = sub.add_parser("card")
     s.add_argument("--palette", required=True)

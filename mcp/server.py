@@ -17,6 +17,7 @@ Design (inherited from the family pattern):
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -51,6 +52,16 @@ def _tool(fn):
     if FastMCP is not None:
         return mcp.tool(fn)
     return fn
+
+
+def _mcp_version():
+    """版本单一事实源 = mcp/pyproject.toml(数字一致性:serverInfo 不再手写)。"""
+    try:
+        pp = os.path.join(_HERE, "pyproject.toml")
+        m = re.search(r'version\s*=\s*"([^"]+)"', open(pp, encoding="utf-8").read())
+        return m.group(1) if m else "0.0.0"
+    except Exception:
+        return "0.0.0"
 
 
 def palette_match_impl(brief: str, limit: int = 6, no_flags: bool = False) -> str:
@@ -177,6 +188,41 @@ def palette_evidence_impl(page: str, palette: str, render: str = "", out: str = 
     return text
 
 
+def palette_tokens_impl(palette: str = "", theme: str = "", name: str = "",
+                        dark: bool = False, out: str = "") -> str:
+    """Full semantic design-token sheet (CSS + JSON): color roles auto-tuned to
+    contrast, accent split into graphic/text variants, space/radius/motion tokens,
+    measured ratios as comments. Give `palette` (comma hex) or `theme` (pack name)."""
+    if palette:
+        args = ["tokens", "--palette", palette]
+    elif theme:
+        args = ["tokens", "--theme", theme]
+    else:
+        return "error: palette or theme required"
+    if name:
+        args += ["--name", name]
+    if dark:
+        args += ["--dark"]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
+def palette_audit_impl(page: str, palette: str = "", floor: float = 12.0, out: str = "") -> str:
+    """Mechanical audit of an EXISTING page: palette drift (nearest-library
+    replacements), gradient ban, purple-background guard, contrast pairs with
+    tuned fix values, font floor, AI-default signatures. FAIL on P0 or P1>=2."""
+    args = ["audit", page]
+    if palette:
+        args += ["--palette", palette]
+    args += ["--floor", floor]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
 if FastMCP is not None:
     mcp = FastMCP("aesthete-agent")
 
@@ -195,6 +241,8 @@ if FastMCP is not None:
     _tool(palette_report_impl)
     _tool(palette_directions_impl)
     _tool(palette_evidence_impl)
+    _tool(palette_tokens_impl)
+    _tool(palette_audit_impl)
 
 
 
@@ -231,6 +279,12 @@ _STDIO_TOOLS = [
     ("palette_evidence", "Evidence dossier: 4 gates + lint (+render probe) for a finished page",
      {"page": {"type": "string"}, "palette": {"type": "string"}, "render": {"type": "string"},
       "out": {"type": "string"}}, ["page", "palette"]),
+    ("palette_tokens", "Semantic design-token sheet (CSS+JSON) with contrast-tuned inks",
+     {"palette": {"type": "string"}, "theme": {"type": "string"}, "name": {"type": "string"},
+      "dark": {"type": "boolean"}, "out": {"type": "string"}}, []),
+    ("palette_audit", "Mechanical audit of an existing page with concrete fix values",
+     {"page": {"type": "string"}, "palette": {"type": "string"}, "floor": {"type": "number"},
+      "out": {"type": "string"}}, ["page"]),
 ]
 
 
@@ -254,6 +308,11 @@ def _stdio_serve():
             a.get("brief", ""), a.get("registers", ""), int(a.get("n", 3)), a.get("out_dir", "directions")),
         "palette_evidence": lambda a: palette_evidence_impl(
             a.get("page", ""), a.get("palette", ""), a.get("render", ""), a.get("out", "")),
+        "palette_tokens": lambda a: palette_tokens_impl(
+            a.get("palette", ""), a.get("theme", ""), a.get("name", ""),
+            bool(a.get("dark", False)), a.get("out", "")),
+        "palette_audit": lambda a: palette_audit_impl(
+            a.get("page", ""), a.get("palette", ""), float(a.get("floor", 12.0)), a.get("out", "")),
     }
     tools = [{"name": n, "description": (d.strip() if d else n),
               "inputSchema": {"type": "object", "properties": props, "required": req}}
@@ -281,7 +340,7 @@ def _stdio_serve():
         if method == "initialize":
             respond(mid, {"protocolVersion": msg.get("params", {}).get("protocolVersion", "2025-06-18"),
                           "capabilities": {"tools": {}},
-                          "serverInfo": {"name": "aesthete-agent-mcp", "version": "0.7.0"}})
+                          "serverInfo": {"name": "aesthete-agent-mcp", "version": _mcp_version()}})
         elif method == "notifications/initialized" or mid is None:
             continue
         elif method == "ping":
@@ -311,7 +370,8 @@ def main(argv=None):
     if a.check:
         ok, text = _call_engine(["selftest"])
         print("engine selftest:", "OK" if ok else "FAIL")
-        print("tools exposed:", 15 if FastMCP is not None else 0, "(fastmcp",
+        n = len(_STDIO_TOOLS) if FastMCP is not None else 0
+        print("tools exposed:", n, "(fastmcp",
               "available)" if FastMCP is not None else "NOT installed — impl-only mode)")
         return 0 if ok else 1
     if FastMCP is None or a.stdio:
