@@ -55,6 +55,14 @@ skillhub install aesthete-agent --dir <your-skills-dir>   # e.g. ~/.claude/skill
 
 or open [skillhub.cn/skills/aesthete-agent](https://skillhub.cn/skills/aesthete-agent) and click 安装到本地 Agent.
 
+**DeepSeek Harness native plugin** (DSH desktop / web / TUI) — 8 native tools over the bundled engine:
+
+```bash
+dsh plugin --profile web add github:docsor1212/dsh-aesthete-agent
+```
+
+**ClawHub** (international registry):
+
 **ClawHub** (international registry):
 
 ```bash

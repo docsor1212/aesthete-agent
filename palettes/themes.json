@@ -175,6 +175,50 @@
    },
    "voice": "深青药丸+珊瑚字,互补克制",
    "signature": "珊瑚×深青"
+  },
+  {
+   "name": "深松苍郁",
+   "name_en": "Deep Pine",
+   "use_when": "户外/木材/咖啡/环保品牌与深色编辑页;冷调苍郁 daylight 可读",
+   "source": "house: 用户点名板 Deep Pine(01161E 系,2026-10-19 入库)",
+   "colors": {
+    "bg": "#EFF6E0",
+    "surface": "#E0E6D3",
+    "ink": "#01161E",
+    "ink2": "#627881",
+    "accent": "#124559",
+    "honey": "#AEC3B0",
+    "danger": "#A65D44",
+    "ok": "#2E7D5B"
+   },
+   "fonts": {
+    "display": "'Noto Serif SC','Source Han Serif SC',Georgia,serif",
+    "body": "-apple-system,'PingFang SC','Microsoft YaHei',sans-serif"
+   },
+   "voice": "苍绿纸底+松墨标题;靛蓝只给链接与重点,鼠尾草只做辅助块",
+   "signature": "深松静边界"
+  },
+  {
+   "name": "晨雾粉彩",
+   "name_en": "Morning Pastel",
+   "use_when": "素雅耐看的落地页/作品集/女性向内容(浅底低饱 daylight)",
+   "source": "house: 用户裁决板 15(Morning Pastel,555B6E 系)",
+   "colors": {
+    "bg": "#FAF9F9",
+    "surface": "#F0EFEF",
+    "ink": "#555B6E",
+    "ink2": "#878DA0",
+    "accent": "#89B0AE",
+    "honey": "#FFD6BA",
+    "danger": "#A65D57",
+    "ok": "#4E7A64"
+   },
+   "fonts": {
+    "display": "'Noto Serif SC','Source Han Serif SC',Georgia,serif",
+    "body": "-apple-system,'PingFang SC','Microsoft YaHei',sans-serif"
+   },
+   "voice": "近白纸底+雾蓝墨阶;鼠尾草给功能强调,蜜桃只做点缀小块",
+   "signature": "雾蓝三分栏"
   }
  ]
 }

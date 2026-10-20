@@ -148,6 +148,8 @@ class TestEvidence(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         ev = json.load(open(out + ".json", encoding="utf-8"))
         self.assertEqual(ev["verdict"], "PASS")
+        self.assertIn("summary", ev["report"])           # 0.8.0 量化叙事
+        self.assertEqual(ev["report"]["summary"]["gates_passed"], "4/4")
         self.assertRegex(ev["fingerprint"], r"^[0-9a-f]{64}$")  # 指纹绑定(零模型信任闸)
         self.assertRegex(ev["page_sha256"], r"^[0-9a-f]{64}$")
         self.assertIn("gates", ev["report"])
