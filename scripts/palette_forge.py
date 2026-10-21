@@ -1899,6 +1899,54 @@ def cmd_typescale(args):
     sys.exit(0 if payload["verdict"] == "PASS" else 1)
 
 
+def cmd_qc(args):
+    """渲染对账(0.11):截图 PNG vs 声明令牌/色板——大底真伪/板外入侵。
+    渲染反馈闭环的机械闸:页面声明与实际渲染脱节(变量被覆盖/样式未加载)在此现形。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import qc_kit
+    except ImportError as e:
+        print(f"缺 qc_kit: {e}", file=sys.stderr)
+        sys.exit(2)
+    if not os.path.exists(args.image):
+        print(f"文件不存在: {args.image}", file=sys.stderr)
+        sys.exit(2)
+    declared, bg = [], None
+    if args.tokens:
+        with open(args.tokens, encoding="utf-8") as f:
+            td = json.load(f)
+        tk = td.get("tokens", td)
+        for v in tk.values():
+            if isinstance(v, str) and re.fullmatch(r"#?[0-9a-fA-F]{6}", v.strip()):
+                declared.append(v.strip().lstrip("#").upper())
+        bg = tk.get("bg")
+    elif args.palette:
+        declared = [h.upper().lstrip("#") for h in palette_list(args.palette)]
+    else:
+        print("--tokens 或 --palette 必给其一", file=sys.stderr)
+        sys.exit(2)
+    if args.bg:
+        bg = args.bg
+    if len(declared) < 2:
+        print("声明色不足 2 个", file=sys.stderr)
+        sys.exit(2)
+    payload = qc_kit.qc_image(args.image, declared, bg)
+    if args.out:
+        with open(args.out, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=1)
+    n = payload["size"]
+    print(f"qc: {os.path.basename(args.image)}({n[0]}×{n[1]}) — 裁决 {payload['verdict']}")
+    print("  主色聚类: " + "  ".join(
+        f"#{c['hex']} {c['share']*100:.0f}%" for c in payload["clusters"][:5]))
+    for f in payload["findings"]:
+        print(f"[{f['sev']}] {f['msg']}")
+        print(f"      ↳ {f['fix']}")
+    if not payload["findings"]:
+        print("[OK] 渲染实况与声明一致(聚类级);构图层仍走五镜截图自审")
+    print(f"指纹: {payload['fingerprint'][:16]}…")
+    sys.exit(0 if payload["verdict"] != "FAIL" else 1)
+
+
 def cmd_card(args):
     hexes = palette_list(args.palette)
     name = args.name or "Palette"
@@ -2191,6 +2239,14 @@ def main():
     s.add_argument("--name", default=None)
     s.add_argument("--out", default=None, help="输出前缀(默认 typescale)")
     s.set_defaults(fn=cmd_typescale)
+
+    s = sub.add_parser("qc")
+    s.add_argument("image", help="渲染截图 PNG")
+    s.add_argument("--tokens", default=None, help="tokens.json(令牌对账)")
+    s.add_argument("--palette", default=None, help="声明色板,逗号分隔 hex")
+    s.add_argument("--bg", default=None, help="声明大底 hex(色板模式建议显式给)")
+    s.add_argument("--out", default=None, help="JSON 输出路径")
+    s.set_defaults(fn=cmd_qc)
 
     s = sub.add_parser("card")
     s.add_argument("--palette", required=True)

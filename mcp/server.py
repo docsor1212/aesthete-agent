@@ -253,6 +253,24 @@ def palette_typescale_impl(base: float = 16.0, ratio: float = 1.25,
     return text
 
 
+def palette_qc_impl(image: str, tokens: str = "", palette: str = "",
+                    bg: str = "", out: str = "") -> str:
+    """Reconcile a rendered screenshot against declared tokens/palette:
+    background authenticity and off-palette intrusions, digest-bound JSON.
+    The mechanical gate of the render feedback loop."""
+    args = ["qc", image]
+    if tokens:
+        args += ["--tokens", tokens]
+    elif palette:
+        args += ["--palette", palette]
+    if bg:
+        args += ["--bg", bg]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
 if FastMCP is not None:
     mcp = FastMCP("aesthete-agent")
 
@@ -275,6 +293,7 @@ if FastMCP is not None:
     _tool(palette_audit_impl)
     _tool(palette_chartpal_impl)
     _tool(palette_typescale_impl)
+    _tool(palette_qc_impl)
 
 
 
@@ -323,6 +342,9 @@ _STDIO_TOOLS = [
     ("palette_typescale", "CJK-friendly modular type scale (CSS + specimen)",
      {"base": {"type": "number"}, "ratio": {"type": "number"}, "name": {"type": "string"},
       "out": {"type": "string"}}, []),
+    ("palette_qc", "Reconcile rendered screenshot vs declared tokens (bg truth / intruders)",
+     {"image": {"type": "string"}, "tokens": {"type": "string"}, "palette": {"type": "string"},
+      "bg": {"type": "string"}, "out": {"type": "string"}}, ["image"]),
 ]
 
 
@@ -357,6 +379,9 @@ def _stdio_serve():
         "palette_typescale": lambda a: palette_typescale_impl(
             float(a.get("base", 16.0)), float(a.get("ratio", 1.25)),
             a.get("name", ""), a.get("out", "")),
+        "palette_qc": lambda a: palette_qc_impl(
+            a.get("image", ""), a.get("tokens", ""), a.get("palette", ""),
+            a.get("bg", ""), a.get("out", "")),
     }
     tools = [{"name": n, "description": (d.strip() if d else n),
               "inputSchema": {"type": "object", "properties": props, "required": req}}
