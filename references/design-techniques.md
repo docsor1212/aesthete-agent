@@ -147,12 +147,75 @@ screen 用在暗底(深强调色底),multiply 用在亮底(浅强调色底)。�
 
 ---
 
+## R11 · 数据表静默纹(表格工艺)
+
+数据表不加斑马纹底色,只用发丝线与 tabular-nums;数字右对齐即对齐了个位。
+
+```css
+table.grid{width:100%;border-collapse:collapse;font-size:14.5px}
+.grid th{background:var(--surface);text-align:left;padding:12px 18px;font-weight:700}
+.grid td{padding:12px 18px;border-top:1px solid var(--line)}
+.grid td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+```
+表头一片 --surface 即可,禁渐变禁重底纹;行高 ≥44px 触控友好;首列不给强调色。
+
+## R12 · 表单的安静秩序(输入件)
+
+输入件是页面最吵的元素,让它安静:实色底、发丝边、聚焦一根强调线。
+
+```css
+.field{display:block;margin-bottom:18px}
+.field label{display:block;font:600 13px/1.4 var(--sans);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg-raised);
+  border:1px solid var(--line);border-radius:var(--r-sm,8px);padding:11px 14px;
+  font:inherit;color:var(--ink)}
+.field :focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field .hint{font-size:12.5px;color:var(--ink-muted);margin-top:5px}
+```
+错误态换字色与边线(不要只靠红色底);标签永远可见(禁 placeholder 当标签)。
+
+## R13 · 空状态的体面(留白叙事)
+
+空状态不是放一个插画完事:一句人话 + 一个下一步。
+
+```html
+<div class="empty">
+  <p class="empty-t">还没有条目</p>
+  <p class="empty-s">第一条会出现在这里——先建一个。</p>
+  <a class="btn" href="#">建第一个</a>
+</div>
+```
+```css
+.empty{text-align:center;padding:72px 24px}
+.empty-t{font:700 17px/1.4 var(--serif)}
+.empty-s{color:var(--ink-muted);font-size:14px;margin:8px 0 18px}
+```
+按钮用主行动样式;禁止 emoji 充当插画;空态文案禁"哎呀/呜呜"式卖萌。
+
+## R14 · 仪表盘外壳(一屏一主角)
+
+仪表盘的惊艳来自克制:一张主卡占视觉重心,其余等权小卡靠边。
+
+```css
+.dash{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+.dash-hero{grid-column:span 7;min-height:320px}
+.dash-side{grid-column:span 5}
+.dash-cell{grid-column:span 4}
+@media (max-width:900px){.dash-hero,.dash-side,.dash-cell{grid-column:span 12}}
+```
+主卡放唯一大数字(巨字对微字:数值 40px+ 配 12px 标签);辅助 KPI 不抢字号;
+图表色用 chartpal 派生,禁彩虹——超过 6 个系列先想分组。
+
+---
+
 # 组合建议(按页型)
 
 | 页型 | 组合 |
 |---|---|
 | 品牌/工坊页 | R1 + R4 + R9 + R3,收尾暗幕 CTA |
 | 产品发布页 | R1 + R5 跑马灯分隔 + R7 产品图双色调 + R6 粘性堆叠特性幕 |
+| 数据/后台页 | R14 仪表盘外壳 + R11 数据表 + R12 表单 + chartpal 图表色 |
+| 内容/社区页 | R9 非对称网格 + R8 悬停揭示卡 + R13 空状态 + R4 幽灵序号 |
 | 作品集 | R9 网格 + R8 悬停揭示 + R2 巨字对微字 + R10 节水印 |
 | 内容/杂志页 | R2 + R6 粘性章节 + R3 |
 

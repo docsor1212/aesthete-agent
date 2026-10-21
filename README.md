@@ -69,7 +69,7 @@ dsh plugin --profile web add github:docsor1212/dsh-aesthete-agent
 npx clawhub install aesthete-agent
 ```
 
-**MCP server** (Claude Desktop, Cursor, any MCP client) — the engine as 17 callable tools:
+**MCP server** (Claude Desktop, Cursor, any MCP client) — the engine as 19 callable tools:
 
 ```bash
 uvx aesthete-agent-mcp            # from PyPI, zero keys
@@ -100,7 +100,7 @@ Full method (manifesto → register → source → roles → validate → five-l
 
 | Area | Highlights |
 |---|---|
-| Engine (31 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house/extract/directions/scene/scaffold/check-image/evidence/tokens/audit |
+| Engine (33 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house/extract/directions/scene/scaffold/check-image/evidence/tokens/audit/chartpal/typescale |
 | Evidence library | 118 curated palettes with like tiers, computed style tags, gate flags |
 | Scene visualizer | 10 real front-end scene types × any palette, light and dark, `--variants` for A/B, `--svg` slot-list recoloring |
 | Theme packs | 8 named packs (colors + fonts + voice + use-when), all with provenance |

@@ -223,6 +223,36 @@ def palette_audit_impl(page: str, palette: str = "", floor: float = 12.0, out: s
     return text
 
 
+def palette_chartpal_impl(kind: str, palette: str = "", theme: str = "",
+                          series: int = 6, out: str = "") -> str:
+    """Chart palette derivation: categorical (CVD-optimized series colors),
+    sequential (single-hue lightness ramp) or diverging (two hues, neutral
+    midpoint). Emits JSON + annotated swatch HTML; exit reflects verdict."""
+    args = ["chartpal", "--kind", kind]
+    if palette:
+        args += ["--palette", palette]
+    elif theme:
+        args += ["--theme", theme]
+    args += ["--series", series]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
+def palette_typescale_impl(base: float = 16.0, ratio: float = 1.25,
+                           name: str = "", out: str = "") -> str:
+    """CJK-friendly modular type scale (12px floor, line-height pairing,
+    tabular-nums token) as CSS + specimen HTML + JSON."""
+    args = ["typescale", "--base", base, "--ratio", ratio]
+    if name:
+        args += ["--name", name]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
 if FastMCP is not None:
     mcp = FastMCP("aesthete-agent")
 
@@ -243,6 +273,8 @@ if FastMCP is not None:
     _tool(palette_evidence_impl)
     _tool(palette_tokens_impl)
     _tool(palette_audit_impl)
+    _tool(palette_chartpal_impl)
+    _tool(palette_typescale_impl)
 
 
 
@@ -285,6 +317,12 @@ _STDIO_TOOLS = [
     ("palette_audit", "Mechanical audit of an existing page with concrete fix values",
      {"page": {"type": "string"}, "palette": {"type": "string"}, "floor": {"type": "number"},
       "out": {"type": "string"}}, ["page"]),
+    ("palette_chartpal", "Chart palette: CVD-checked categorical / sequential / diverging",
+     {"kind": {"type": "string"}, "palette": {"type": "string"}, "theme": {"type": "string"},
+      "series": {"type": "number"}, "out": {"type": "string"}}, ["kind"]),
+    ("palette_typescale", "CJK-friendly modular type scale (CSS + specimen)",
+     {"base": {"type": "number"}, "ratio": {"type": "number"}, "name": {"type": "string"},
+      "out": {"type": "string"}}, []),
 ]
 
 
@@ -313,6 +351,12 @@ def _stdio_serve():
             bool(a.get("dark", False)), a.get("out", "")),
         "palette_audit": lambda a: palette_audit_impl(
             a.get("page", ""), a.get("palette", ""), float(a.get("floor", 12.0)), a.get("out", "")),
+        "palette_chartpal": lambda a: palette_chartpal_impl(
+            a.get("kind", "categorical"), a.get("palette", ""), a.get("theme", ""),
+            int(a.get("series", 6)), a.get("out", "")),
+        "palette_typescale": lambda a: palette_typescale_impl(
+            float(a.get("base", 16.0)), float(a.get("ratio", 1.25)),
+            a.get("name", ""), a.get("out", "")),
     }
     tools = [{"name": n, "description": (d.strip() if d else n),
               "inputSchema": {"type": "object", "properties": props, "required": req}}

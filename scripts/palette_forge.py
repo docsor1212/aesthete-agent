@@ -1837,6 +1837,68 @@ def cmd_audit(args):
     sys.exit(0 if payload["verdict"] != "FAIL" else 1)
 
 
+def cmd_chartpal(args):
+    """图表用色板(0.10):categorical=CVD 择优系列色 / sequential=单色相明度坡 /
+    diverging=双端-中性中点。产出 JSON+标注色样 HTML;区分度/单调性不达标 exit 1。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import chart_kit
+    except ImportError as e:
+        print(f"缺 chart_kit: {e}", file=sys.stderr)
+        sys.exit(2)
+    if args.theme:
+        hexes = _theme_hexes(args.theme)
+    elif args.palette:
+        hexes = [h.upper().lstrip("#") for h in palette_list(args.palette)]
+    else:
+        print("--theme 或 --palette 必给其一", file=sys.stderr)
+        sys.exit(2)
+    n = max(2, min(args.series, 12))
+    if args.kind == "categorical":
+        if len(hexes) < 2:
+            print("categorical 需 ≥2 候选色", file=sys.stderr)
+            sys.exit(2)
+        series, checks = chart_kit.categorical(hexes, n)
+    elif args.kind == "sequential":
+        series, checks = chart_kit.sequential(hexes[0], n, reverse=bool(args.reverse))
+    elif args.kind == "diverging":
+        if len(hexes) < 2:
+            print("diverging 需两端色(--palette 至少 2 色)", file=sys.stderr)
+            sys.exit(2)
+        series, checks = chart_kit.diverging(hexes[0], hexes[1], n)
+    else:
+        print(f"未知类型: {args.kind}", file=sys.stderr)
+        sys.exit(2)
+    payload = chart_kit.emit(args.kind, series, checks, args.name or "", args.out or "chartpal")
+    print(f"chartpal: {(args.out or 'chartpal')}.json + .html — 裁决 {payload['verdict']}")
+    print("  系列: " + " ".join("#" + h for h in series))
+    for k, v in checks.items():
+        if k != "verdict":
+            print(f"  {k} = {v}")
+    print("用色纪律: 一个主角系列给重点;直接标注数据少用图例;数字列 tabular-nums")
+    sys.exit(0 if payload["verdict"] == "PASS" else 1)
+
+
+def cmd_typescale(args):
+    """CJK 友好字阶(0.10):模块等比生成 7 级,12px 硬下限,行高配对,
+    tabular-nums 数据令牌;产出 tokens CSS + 中英混排样张 + JSON。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import type_kit
+    except ImportError as e:
+        print(f"缺 type_kit: {e}", file=sys.stderr)
+        sys.exit(2)
+    payload = type_kit.emit(args.name or "", base=args.base, ratio=args.ratio,
+                            floor=args.floor, out_base=args.out or "typescale")
+    print(f"typescale: {(args.out or 'typescale')}.css + .html + .json — 裁决 {payload['verdict']}")
+    for s in ("3xl", "2xl", "xl", "lg", "base", "sm", "xs"):
+        t = payload["tokens"][s]
+        print(f"  --text-{s}: {t['px']}px/{t['lh']} ({t['role']})")
+    if payload["checks"]["clamped_steps"]:
+        print(f"  下限钳制: {', '.join(payload['checks']['clamped_steps'])}")
+    sys.exit(0 if payload["verdict"] == "PASS" else 1)
+
+
 def cmd_card(args):
     hexes = palette_list(args.palette)
     name = args.name or "Palette"
@@ -2110,6 +2172,25 @@ def main():
     s.add_argument("--floor", type=float, default=12, help="字号下限 px")
     s.add_argument("--out", default=None, help="JSON 输出前缀")
     s.set_defaults(fn=cmd_audit)
+
+    s = sub.add_parser("chartpal")
+    s.add_argument("--kind", required=True,
+                   choices=["categorical", "sequential", "diverging"])
+    s.add_argument("--palette", default=None, help="候选色(分类≥2;发散=两端色)")
+    s.add_argument("--theme", default=None, help="主题包名(与 --palette 二选一)")
+    s.add_argument("--series", type=int, default=6, help="系列数(2-12)")
+    s.add_argument("--reverse", action="store_true", help="顺序板浅→深反转")
+    s.add_argument("--name", default=None)
+    s.add_argument("--out", default=None, help="输出前缀(默认 chartpal)")
+    s.set_defaults(fn=cmd_chartpal)
+
+    s = sub.add_parser("typescale")
+    s.add_argument("--base", type=float, default=16, help="正文字号 px")
+    s.add_argument("--ratio", type=float, default=1.25, help="等比(1.125-1.5)")
+    s.add_argument("--floor", type=float, default=12, help="字号硬下限 px")
+    s.add_argument("--name", default=None)
+    s.add_argument("--out", default=None, help="输出前缀(默认 typescale)")
+    s.set_defaults(fn=cmd_typescale)
 
     s = sub.add_parser("card")
     s.add_argument("--palette", required=True)
