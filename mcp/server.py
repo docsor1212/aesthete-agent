@@ -271,6 +271,25 @@ def palette_qc_impl(image: str, tokens: str = "", palette: str = "",
     return text
 
 
+def palette_narrate_impl(palette: str = "", theme: str = "",
+                         name: str = "", out: str = "") -> str:
+    """Measured-numbers-only bilingual rationale from the report gates
+    (contrast pair, blind sims, slop scan, score, fingerprint) — every number
+    traceable, template sentences, zero invented claims."""
+    if palette:
+        args = ["narrate", "--palette", palette]
+    elif theme:
+        args = ["narrate", "--theme", theme]
+    else:
+        return "error: palette or theme required"
+    if name:
+        args += ["--name", name]
+    if out:
+        args += ["--out", out]
+    ok, text = _call_engine(args)
+    return text
+
+
 if FastMCP is not None:
     mcp = FastMCP("aesthete-agent")
 
@@ -294,6 +313,7 @@ if FastMCP is not None:
     _tool(palette_chartpal_impl)
     _tool(palette_typescale_impl)
     _tool(palette_qc_impl)
+    _tool(palette_narrate_impl)
 
 
 
@@ -345,6 +365,9 @@ _STDIO_TOOLS = [
     ("palette_qc", "Reconcile rendered screenshot vs declared tokens (bg truth / intruders)",
      {"image": {"type": "string"}, "tokens": {"type": "string"}, "palette": {"type": "string"},
       "bg": {"type": "string"}, "out": {"type": "string"}}, ["image"]),
+    ("palette_narrate", "Bilingual measured-numbers rationale from report gates",
+     {"palette": {"type": "string"}, "theme": {"type": "string"}, "name": {"type": "string"},
+      "out": {"type": "string"}}, []),
 ]
 
 
@@ -382,6 +405,8 @@ def _stdio_serve():
         "palette_qc": lambda a: palette_qc_impl(
             a.get("image", ""), a.get("tokens", ""), a.get("palette", ""),
             a.get("bg", ""), a.get("out", "")),
+        "palette_narrate": lambda a: palette_narrate_impl(
+            a.get("palette", ""), a.get("theme", ""), a.get("name", ""), a.get("out", "")),
     }
     tools = [{"name": n, "description": (d.strip() if d else n),
               "inputSchema": {"type": "object", "properties": props, "required": req}}

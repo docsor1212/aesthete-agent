@@ -1431,13 +1431,26 @@ BRIEF_KEYWORDS = {
     # 前端语域(0.7.0):中文审美口语词 → 板族。"鲜艳"只指向有品位的鲜活——
     # 无品位的刺眼板带 gate 旗/踩禁词族,排序里 -4 自然沉底,不是这里豁免。
     "frontend_soft": ["素雅", "清新", "柔和", "温柔", "淡雅", "耐看", "干净", "极简", "简洁", "轻盈",
-                      "奶油", "莫兰迪", "奶油风", "治愈", "轻盈感", "温柔风"],
+                      "奶油", "莫兰迪", "奶油风", "治愈", "轻盈感", "温柔风",
+                      # 0.12.0 扩容
+                      "素净", "温润", "细腻", "柔美", "淡色", "舒适", "棉麻", "日式", "侘寂", "奶咖",
+                      "软糯", "松弛"],
     "frontend_deep": ["大气", "稳重", "高级", "高级感", "质感", "商务", "沉稳", "典雅", "正式", "深沉",
-                      "轻奢", "厚重", "硬朗", "工业风", "办公"],
+                      "轻奢", "厚重", "硬朗", "工业风", "办公",
+                      # 0.12.0 扩容
+                      "老钱风", "深邃", "暗色调", "墨色", "咖啡", "皮革", "胡桃木", "绅士", "压得住"],
     "frontend_bold": ["鲜艳", "活力", "年轻", "大胆", "撞色", "吸睛", "潮流", "醒目",
-                      "明快", "清爽", "活泼", "元气", "有劲"],
+                      "明快", "清爽", "活泼", "元气", "有劲",
+                      # 0.12.0 扩容
+                      "多巴胺", "节庆", "欢快", "张扬", "热烈", "能量感"],
     "frontend_tech": ["科技", "科技感", "现代", "未来", "理性", "开发者", "程序员", "数据",
-                      "极客", "赛博", "科幻", "智能"],
+                      "极客", "赛博", "科幻", "智能",
+                      # 0.12.0 扩容
+                      "赛博朋克", "像素", "终端", "代码", "太空", "宇宙", "机甲", "霓虹"],
+    # 东方语域(0.12.0):国风/传统色审美 → 暖陶/深墨/青绿系板
+    "frontend_heritage": ["国风", "国潮", "水墨", "青绿", "敦煌", "宋韵", "禅意", "茶",
+                          "古朴", "陶土", "宣纸", "东方", "汉风", "唐风", "古风", "年画",
+                          "瓷器", "漆器"],
 }
 REGISTER_TAGS = {
     "medical_teaching": ["light", "mid", "warm", "cool", "pastel"],
@@ -1446,6 +1459,7 @@ REGISTER_TAGS = {
     "frontend_deep": ["dark", "mid", "cool", "monochromatic"],
     "frontend_bold": ["vivid", "warm", "multihue", "mid"],
     "frontend_tech": ["cool", "monochromatic", "mid", "light"],
+    "frontend_heritage": ["warm", "mid", "dark", "pastel"],
 }
 
 
@@ -1947,6 +1961,44 @@ def cmd_qc(args):
     sys.exit(0 if payload["verdict"] != "FAIL" else 1)
 
 
+def cmd_narrate(args):
+    """量化叙事(0.12):report 实测数字 → 双语说明文,数字可溯源,句式模板零发挥。
+    给"为什么这样配"一个可直接转发的答案;退出码跟 report 裁决。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import narrate_kit
+    except ImportError as e:
+        print(f"缺 narrate_kit: {e}", file=sys.stderr)
+        sys.exit(2)
+    if args.theme:
+        hexes = _theme_hexes(args.theme)
+    else:
+        hexes = [h.upper().lstrip("#") for h in palette_list(args.palette or "")]
+    if len(hexes) < 3:
+        print("--theme 或 --palette 必给其一(≥3 色)", file=sys.stderr)
+        sys.exit(2)
+    rep = subprocess.run([sys.executable, os.path.abspath(__file__),
+                          "report", "--palette", ",".join(hexes)],
+                         capture_output=True, text=True)
+    _out = rep.stdout.strip()
+    _i = _out.find("{")
+    try:
+        report = json.loads(_out[_i:]) if _i >= 0 else {}
+    except Exception:
+        print(f"report 解析失败: {(_out or rep.stderr)[-300:]}", file=sys.stderr)
+        sys.exit(2)
+    roles = _viz_roles(hexes, dark=bool(getattr(args, "dark", False)))
+    body, verdict = narrate_kit.emit(report, hexes, roles, args.name or args.theme or "",
+                                     out=args.out)
+    print(body)
+    if not args.out:
+        default = (args.name or args.theme or "palette").strip().replace(" ", "-") + ".narration.md"
+        with open(default, "w", encoding="utf-8", newline="\n") as f:
+            f.write(body)
+        print(f"(已写入 {default})")
+    sys.exit(0 if verdict == "PASS" else 1)
+
+
 def cmd_card(args):
     hexes = palette_list(args.palette)
     name = args.name or "Palette"
@@ -2247,6 +2299,14 @@ def main():
     s.add_argument("--bg", default=None, help="声明大底 hex(色板模式建议显式给)")
     s.add_argument("--out", default=None, help="JSON 输出路径")
     s.set_defaults(fn=cmd_qc)
+
+    s = sub.add_parser("narrate")
+    s.add_argument("--palette", default=None, help="色板,逗号分隔 hex")
+    s.add_argument("--theme", default=None, help="主题包名(与 --palette 二选一)")
+    s.add_argument("--name", default=None, help="板名(写入标题)")
+    s.add_argument("--dark", action="store_true", help="按暗底推导角色")
+    s.add_argument("--out", default=None, help="输出 md 路径")
+    s.set_defaults(fn=cmd_narrate)
 
     s = sub.add_parser("card")
     s.add_argument("--palette", required=True)

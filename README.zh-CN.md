@@ -69,7 +69,7 @@ dsh plugin --profile web add github:docsor1212/dsh-aesthete-agent
 npx clawhub install aesthete-agent
 ```
 
-**MCP 服务器**（Claude Desktop、Cursor、任何 MCP 客户端）——引擎变 20 个可调用工具：
+**MCP 服务器**（Claude Desktop、Cursor、任何 MCP 客户端）——引擎变 21 个可调用工具：
 
 ```bash
 uvx aesthete-agent-mcp            # 来自 PyPI，零密钥
@@ -100,7 +100,7 @@ python "$S" doctor                                              # 环境体检
 
 | 领域 | 亮点 |
 |---|---|
-| 引擎（34 个子命令） | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house/extract/directions/scene/scaffold/check-image/evidence/tokens/audit/chartpal/typescale/qc |
+| 引擎（35 个子命令） | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house/extract/directions/scene/scaffold/check-image/evidence/tokens/audit/chartpal/typescale/qc/narrate |
 | 实证色板库 | 118 块精选色板，带点赞分层、风格标签、闸门旗标 |
 | 场景可视化 | 10 种真实前端场景 × 任意色板，明亮/暗色，`--variants` A/B 对比，`--svg` 槽位清单重着色 |
 | 命名主题包 | 8 个主题（配色 + 字体 + 语气 + 适用域），全部有出处 |
