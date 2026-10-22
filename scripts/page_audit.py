@@ -207,6 +207,25 @@ def audit_page(html, declared_palette=None, floor=12.0):
             "msg": "字号低于下限 %.0fpx: %s" % (floor, sorted(set(small))),
             "fix": "正文下限 12px(数据/说明);投影与海报场景建议 24-34px"})
 
+    # 4b 排印:中文负字距 / display 行高松弛
+    lang_zh = re.search(r"<html[^>]*lang=[\"']zh", html, re.I) is not None
+    if lang_zh:
+        negs = ["%s%s" % (v, u) for v, u in
+                re.findall(r"letter-spacing:\s*(-\d*\.?\d+)(em|px|rem)", html) if float(v) < 0]
+        if negs:
+            findings.append({"sev": "P2", "check": "cjk_negative_tracking",
+                             "msg": "中文页出现负字距 %s——方块字负字距致笔画碰撞" % sorted(set(negs)),
+                             "fix": "中文任何字号 0~+0.02em;Latin display 才可用 -0.02em(隔离到 Latin 专用类)"})
+    for m in re.finditer(r"<h[1-3][^>]*>[^<]*</h[1-3]>|h[1-3][^{]*\{[^{}]*\}", html):
+        block = m.group(0)
+        fs = re.search(r"font-size:\s*(\d+(?:\.\d+)?)px", block)
+        lh = re.search(r"line-height:\s*(\d+(?:\.\d+)?)", block)
+        if fs and lh and float(fs.group(1)) >= 28 and float(lh.group(1)) >= 1.4:
+            findings.append({"sev": "P2", "check": "display_line_height",
+                             "msg": "display 级标题 %.0fpx 配行高 %s——无 display 感" % (float(fs.group(1)), lh.group(1)),
+                             "fix": "巨标行高 1.05-1.15;行高对比律(巨标/导语/正文强制拉开)"})
+            break
+
     # 5 AI 默认签名
     if GLASS_RE.search(html):
         findings.append({"sev": "P1", "check": "glassmorphism",

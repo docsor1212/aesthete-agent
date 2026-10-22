@@ -1903,7 +1903,8 @@ def cmd_typescale(args):
         print(f"缺 type_kit: {e}", file=sys.stderr)
         sys.exit(2)
     payload = type_kit.emit(args.name or "", base=args.base, ratio=args.ratio,
-                            floor=args.floor, out_base=args.out or "typescale")
+                            floor=args.floor, out_base=args.out or "typescale",
+                            fluid=bool(getattr(args, "fluid", False)))
     print(f"typescale: {(args.out or 'typescale')}.css + .html + .json — 裁决 {payload['verdict']}")
     for s in ("3xl", "2xl", "xl", "lg", "base", "sm", "xs"):
         t = payload["tokens"][s]
@@ -2288,6 +2289,7 @@ def main():
     s.add_argument("--base", type=float, default=16, help="正文字号 px")
     s.add_argument("--ratio", type=float, default=1.25, help="等比(1.125-1.5)")
     s.add_argument("--floor", type=float, default=12, help="字号硬下限 px")
+    s.add_argument("--fluid", action="store_true", help="display 级发流体 clamp(375-1440px 线性)")
     s.add_argument("--name", default=None)
     s.add_argument("--out", default=None, help="输出前缀(默认 typescale)")
     s.set_defaults(fn=cmd_typescale)

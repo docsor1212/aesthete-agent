@@ -11,12 +11,23 @@ import json
 import math
 
 STEPS = ["3xl", "2xl", "xl", "lg", "base", "sm", "xs"]
+FLUID_STEPS = ("3xl", "2xl", "xl", "lg")
 LINE_HEIGHT = {"display": 1.15, "heading": 1.3, "body": 1.7, "caption": 1.5}
 ROLES = {"3xl": "display", "2xl": "display", "xl": "heading", "lg": "heading",
          "base": "body", "sm": "caption", "xs": "caption"}
 
 
-def build(base=16.0, ratio=1.25, floor=12.0):
+def _fluid(target_px, floor=12.0):
+    """display 级流体字阶:375px 视口取 0.62×,1440px 视口取 1.15×,中段线性。"""
+    lo = max(target_px * 0.62, floor)
+    hi = target_px * 1.15
+    vw = (hi - lo) / (14.40 - 3.75)
+    base = lo - 3.75 * vw
+    rem = lambda x: round(x / 16, 3)
+    return (f"clamp({rem(lo)}rem, calc({rem(base)}rem + {round(vw, 3)}vw), {rem(hi)}rem)")
+
+
+def build(base=16.0, ratio=1.25, floor=12.0, fluid=False):
     """→ (tokens dict, checks dict)。向上 4 级向下 2 级,低于下限钳制并记录。"""
     order = {"3xl": 4, "2xl": 3, "xl": 2, "lg": 1, "base": 0, "sm": -1, "xs": -2}
     tokens, clamped = {}, []
@@ -26,9 +37,11 @@ def build(base=16.0, ratio=1.25, floor=12.0):
         if v > raw + 1e-9:
             clamped.append(name)
         tokens[name] = {"px": round(v, 1), "lh": LINE_HEIGHT[ROLES[name]], "role": ROLES[name]}
+        if fluid and name in FLUID_STEPS:
+            tokens[name]["fluid"] = _fluid(v, floor)
     sizes = [tokens[s]["px"] for s in STEPS]
     checks = {
-        "base": base, "ratio": ratio, "floor": floor,
+        "base": base, "ratio": ratio, "floor": floor, "fluid": bool(fluid),
         "monotonic": all(sizes[i] > sizes[i + 1] for i in range(len(sizes) - 1)),
         "clamped_steps": clamped,
         "display_vs_body": round(sizes[0] / sizes[4], 2),
@@ -37,25 +50,36 @@ def build(base=16.0, ratio=1.25, floor=12.0):
     return tokens, checks
 
 
-def emit(name="", brand="", base=16.0, ratio=1.25, floor=12.0, out_base="typescale"):
-    """tokens CSS + 样张 HTML + JSON。"""
-    tokens, checks = build(base, ratio, floor)
+def emit(name="", brand="", base=16.0, ratio=1.25, floor=12.0, out_base="typescale", fluid=False):
+    """tokens CSS + 样张 HTML + JSON。fluid=True:display 级发出流体 clamp。"""
+    tokens, checks = build(base, ratio, floor, fluid=fluid)
     verdict = checks["verdict"]
     lines = [
-        "/* %s — aesthete-agent typescale(0.10.0)" % (name or "type ramp"),
-        "   基准 %.0fpx · 等比 %.3f · 下限 %.0fpx%s" % (base, ratio, floor,
-          "(钳制: %s)" % ", ".join(checks["clamped_steps"]) if checks["clamped_steps"] else ""),
+        "/* %s — aesthete-agent typescale(0.13.0)" % (name or "type ramp"),
+        "   基准 %.0fpx · 等比 %.3f · 下限 %.0fpx%s · %s" % (base, ratio, floor,
+          ("(钳制: %s)" % ", ".join(checks["clamped_steps"])) if checks["clamped_steps"] else "",
+          "流体字阶(display 级 clamp)" if checks["fluid"] else "固定字阶"),
         "   行高:展示 1.15 / 标题 1.3 / 正文 1.7(CJK 区间) / 辅助 1.5 */",
         ":root{",
     ]
     for s in STEPS:
         t = tokens[s]
         var = "--text-" + s
-        lines.append("  %s:%gpx/%s;" % (var, t["px"], t["lh"]))
+        val = t.get("fluid") or ("%gpx" % t["px"])
+        lines.append("  %s:%s/%s;" % (var, val, t["lh"]))
     lines += [
         "  --lh-body:1.7;  /* 中文正文 1.65-1.8;行长约 35-42 字 */",
+        "  --track-display:-0.02em;  /* Latin 巨标收紧 */",
+        "  --track-caps:0.1em;       /* 全大写小标签放宽(字号越小加越多) */",
+        "  --track-zh-display:0.01em;/* 中文巨标;中文禁负字距 */",
         "  --font-tnum:{font-variant-numeric:tabular-nums};  /* 数据表/指标列专用 */",
         "}",
+        "/* 排印底座(语法见 references/typography-system.md;均渐进/安全) */",
+        ":lang(zh){text-autospace:normal;line-break:strict}",
+        "h1,h2{text-wrap:balance;max-inline-size:18ch}",
+        "p{text-wrap:pretty}",
+        ':lang(zh) :is(h1,h2,h3){font-feature-settings:"palt" 1}',
+        "/* 用法:display 级令牌已含流体 clamp;减动效:@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}} */",
     ]
     css = "\n".join(lines) + "\n"
 
@@ -86,7 +110,7 @@ def emit(name="", brand="", base=16.0, ratio=1.25, floor=12.0, out_base="typesca
 <p style="font-size:12.5px;color:#888;margin-top:24px">指纹暂无·纯排版产物 · aesthete-agent typescale(0.10.0)</p>
 </body></html>"""
     payload = {"name": name, "tokens": {k: v for k, v in tokens.items()},
-               "checks": checks, "verdict": verdict}
+               "checks": checks, "verdict": verdict, "fluid": bool(fluid)}
     payload["fingerprint"] = hashlib.sha256(
         ("aesthete-typescale/v1|%.1f|%.3f|%.0f|%s" % (base, ratio, floor, verdict)).encode("utf-8")).hexdigest()
     with open(out_base + ".css", "w", encoding="utf-8", newline="\n") as f:
