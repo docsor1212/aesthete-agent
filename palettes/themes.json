@@ -219,6 +219,26 @@
    },
    "voice": "近白纸底+雾蓝墨阶;鼠尾草给功能强调,蜜桃只做点缀小块",
    "signature": "雾蓝三分栏"
+  },
+  {
+   "name": "野莓甜室",
+   "name_en": "Wildberry Atelier",
+   "colors": {
+    "bg": "FFFFFF",
+    "ink": "585B56",
+    "ink2": "EA526F",
+    "accent": "E76B74",
+    "sage": "D7AF70",
+    "honey": "937D64"
+   },
+   "use_when": "法式甜品/花艺/婚礼/温暖手作品牌",
+   "voice": "温暖甜蜜而有分寸",
+   "signature": "野莓圆与焦糖弧",
+   "source": "house: 用户裁决板 15(Morning Pastel,555B6E 系)",
+   "fonts": {
+    "display": "'Noto Serif SC','Source Han Serif SC',Georgia,serif",
+    "body": "-apple-system,'PingFang SC','Microsoft YaHei',sans-serif"
+   }
   }
  ]
 }

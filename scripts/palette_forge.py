@@ -1717,8 +1717,15 @@ def cmd_scaffold(args):
     else:
         print("--theme 或 --palette 必给其一", file=sys.stderr)
         sys.exit(2)
-    html = scaffold_kit.build(tokens)
-    out = args.out or (args.brand or "scaffold").lower().replace(" ", "-") + "-page.html"
+    recipe = (getattr(args, "recipe", None) or "DARK-FOUR-ACT").upper().strip()
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import layout_recipes
+        html = layout_recipes.build_recipe(tokens, recipe)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(2)
+    out = args.out or (args.brand or "scaffold").lower().replace(" ", "-") + "-" + recipe.lower().replace("_", "-") + ".html"
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         f.write(html)
     print(f"scaffold: {out}")
@@ -2240,6 +2247,8 @@ def main():
     s = sub.add_parser("scaffold")
     s.add_argument("--theme", help="主题包 name_en/name,如 Deep Pine")
     s.add_argument("--palette", help="逗号分隔 hex(无主题时用)")
+    s.add_argument("--recipe", default="DARK-FOUR-ACT",
+                   help="布局配方: DARK-FOUR-ACT/EDIT-SPLIT/BLUEPRINT/SWISS-POSTER/EDITORIAL-MAG")
     s.add_argument("--brand", default=None, help="品牌名(默认取主题)")
     s.add_argument("--brand-en", dest="brand_en", default=None)
     s.add_argument("--use-when", dest="use_when", default="")

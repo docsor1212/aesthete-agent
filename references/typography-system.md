@@ -8,6 +8,8 @@
 
 ## 规则一:排印底座(一段 CSS,全页生效)
 
+以上经 Chromium 146 无头实测(2026-10-21):`text-autospace` 生效且数值精确(16px 字号 4 处边界=4px,与理论一致);`text-wrap: balance/pretty` 支持已证,但对 CJK 等宽字的收益未观测到(安全保留)。
+
 ```css
 :root { -webkit-text-size-adjust: 100%; }
 :lang(zh) { text-autospace: normal; }          /* 中西文之间自动 1/4 字距;现代浏览器已支持但默认关闭,必须显式声明 */
@@ -37,7 +39,7 @@ p          { text-wrap: pretty; }               /* 正文防寡行;不支持的�
 
 ## 规则四:CJK 标点与禁则
 
-- 标题与眉题开比例标点:`:lang(zh) :is(h1,h2,h3,.kicker) { font-feature-settings: "palt" 1; }`(全角标点转比例宽;需字体支持,思源系 v2 具备);
+- 标题与眉题开比例标点:`:lang(zh) :is(h1,h2,h3,.kicker) { font-feature-settings: "palt" 1; }`(全角标点转比例宽;**实测字体依赖:系统字体如微软雅黑无 palt/halt 特性零效果,只有带该 OpenType 特性的字体——如思源 v2——才生效;交付自带字体时才可靠**)。
 - 破折号"——"与删节号"……"不可拆行:生成期包 `<span style="white-space:nowrap">——</span>`;
 - 行距纪律:段落间距与首行缩进二选一,**不混用**。
 
@@ -88,7 +90,7 @@ h1 { font-size: clamp(2.75rem, 6.5vw, 6rem); font-weight: 900;
 ## 规则九:渐进增强三件套(支持则加分,不支持无害)
 
 ```css
-:lang(zh) { text-spacing-trim: normal; }            /* 标点挤压;新引擎渐次覆盖 */
+:lang(zh) { text-spacing-trim: normal; }            /* 标点挤压;实测同 palt——依赖字体 halt/chws,系统字体零效果 */
 figcaption { hanging-punctuation: first allow-end; } /* 图注悬挂标点 */
 @supports (initial-letter: 3) { .prose > p:first-of-type::first-letter
   { initial-letter: 3 2; font-weight: 700; margin-right: 8px; } }

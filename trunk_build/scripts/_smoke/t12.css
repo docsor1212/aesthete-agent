@@ -1,0 +1,58 @@
+/* palette — aesthete-agent tokens(0.9.0)
+   色板: #EA526F #E76B74 #D7AF70 #937D64 #585B56
+   模式: light-primary · 裁决 PASS
+   墨色已按对比度自动调墨;数值注释为 WCAG 实测比。*/
+:root{
+  --bg:#F3E7D4;  /* 大底(与 --ink 5.64:1) */
+  --bg-raised:#FAF4EC;  /* 卡片面(次字 5.18:1) */
+  --ink:#585B56;  /* 主字(5.64:1) */
+  --ink-muted:#766450;  /* 次字/说明(4.64:1) */
+  --line:#D66970;  /* 发丝线/分隔 */
+  --accent:#EA526F;  /* 强调·图形/色块(图形比 2.90:1);做正文请用 --accent-ink */
+  --accent-ink:#B03E53;  /* 强调·文字(4.70:1) */
+  --accent-soft:#F1C6BE;  /* 强调柔态:标签底/hover 面 */
+  --night:#585B56;  /* 暗幕大底(明暗旅程的暗段) */
+  --on-night:#F3E7D4;  /* 暗幕主字(5.64:1) */
+  --on-night-muted:#E3D5C1;  /* 暗幕次字(4.78:1) */
+  --paper:#585B56;  /* 反幕大底(暗页中的亮节) */
+  --on-paper:#F3E7D4;  /* 反幕主字(5.64:1) */
+  --font-serif:'Noto Serif SC','Source Han Serif SC','Songti SC',Georgia,serif;
+  --font-sans:-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+  --font-mono:ui-monospace,'SF Mono',Consolas,'JetBrains Mono',monospace;
+  --s1:4px;
+  --s2:8px;
+  --s3:12px;
+  --s4:16px;
+  --s5:24px;
+  --s6:32px;
+  --s7:48px;
+  --s8:64px;
+  --s9:96px;
+  --s10:128px;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-xl:24px;
+  --dur-1:150ms;
+  --dur-2:300ms;
+  --dur-3:600ms;
+  --ease-out:cubic-bezier(.2,.6,.2,1);
+}
+/* 用法:明暗幕成对使用——暗段容器底 var(--night) 字 var(--on-night);
+   减动效:@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}} */
+
+/* 12 步语义阶(浅暗双模式共用语义) */
+:root{
+  --step-01-app-bg: #EEEEEE;
+  --step-02-sub-bg: #E1E2E1;
+  --step-03-el-bg: #F8C8D1;
+  --step-04-el-hover: #F6B6C2;
+  --step-05-el-active: #F39EAE;
+  --step-06-border: #AE9E8B;
+  --step-07-border-strong: #716F6C;
+  --step-08-solid: #9A8E8E;
+  --step-09-solid-hover: #925D61;
+  --step-10-text-low: #795254;
+  --step-11-text-high: #5B4A2F;
+  --step-12-ink-deep: #443823;
+}

@@ -226,6 +226,42 @@ def audit_page(html, declared_palette=None, floor=12.0):
                              "fix": "巨标行高 1.05-1.15;行高对比律(巨标/导语/正文强制拉开)"})
             break
 
+    # 4c 布局:三等分滥用 / 间距档位 / 跑马灯计数
+    span4 = len(re.findall(r"grid-column:\s*span\s*4\b", html))
+    if span4 >= 3:
+        findings.append({"sev": "P2", "check": "equal_thirds",
+                         "msg": "span 4 出现 %d 次——三等分卡片惯性;连续两节禁同跨度组合,4+4+4 每页最多一次" % span4,
+                         "fix": "换跨度词汇:7+5/5+4+3/2+8+2/6+3+3,或不对称比 7:5/8:4/5:8"})
+    tier_ok = {40, 48, 64, 80, 96, 120}
+    bad_pad = []
+    for m in re.finditer(r"(?:^|\n)\s*section[^{]*\{[^}]*?padding(?:-top)?:\s*(\d+)px", html):
+        v = int(m.group(1))
+        if v not in tier_ok and min(abs(v - x) for x in tier_ok) > 4:
+            bad_pad.append(v)
+    if bad_pad:
+        findings.append({"sev": "P2", "check": "section_spacing_tier",
+                         "msg": "节距越档: %s——只用 96/64/40 三档(海报风 120/80/48)" % sorted(set(bad_pad)),
+                         "fix": "节距三级制:96(幕间)/64(分节)/40(紧凑);保持 8 的倍数"})
+    kf_names = set(re.findall(r"@keyframes\s+([\w-]+)\s*\{(?:(?!@keyframes)[\s\S])*?translateX", html))
+    marquees = sum(len(re.findall(r"animation(?:-name)?\s*:[^;}]*\b" + re.escape(n) + r"\b", html))
+                   for n in kf_names)
+    if marquees > 1:
+        findings.append({"sev": "P2", "check": "marquee_count",
+                         "msg": "跑马灯/无限横移动画 %d 处(每页≤1)" % marquees,
+                         "fix": "一页一条跑马灯;其余改静态带"})
+    # 4d 大面积背景脏色检查:结构级标签的背景须为浅 tint/低饱和/深暗幕
+    for m in re.finditer(r"(?:^|\n)\s*(?:body|section|header|footer|main|nav|aside)[^{]*"
+                         r"\{[^}]*?background(?:-color)?:\s*([^;}]+)", html, re.I):
+        col = _decl_value(m.group(1))
+        if not col:
+            continue
+        rr, gg, bb = (int(col[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        hh, ll, ss = colorsys.rgb_to_hls(rr, gg, bb)
+        if ss >= 0.25 and 0.30 < ll < 0.85:
+            findings.append({
+                "sev": "P2", "check": "muddy_large_bg",
+                "msg": "大面积背景用了中饱和中明度色 #%s(显脏风险)" % col,
+                "fix": "大面积背景三选一:向白 tint 到 L≥0.85 / 低饱和深暗幕(L≤0.25) / 干脆白底+细边"})
     # 5 AI 默认签名
     if GLASS_RE.search(html):
         findings.append({"sev": "P1", "check": "glassmorphism",

@@ -1,0 +1,55 @@
+{
+ "name": "palette",
+ "brand": "",
+ "dark_primary": false,
+ "palette": [
+  "EA526F",
+  "E76B74",
+  "D7AF70",
+  "937D64",
+  "585B56"
+ ],
+ "tokens": {
+  "bg": "#F3E7D4",
+  "bg_raised": "#FAF4EC",
+  "ink": "#585B56",
+  "ink_muted": "#766450",
+  "line": "#D66970",
+  "accent": "#EA526F",
+  "accent_ink": "#B03E53",
+  "accent_soft": "#F1C6BE",
+  "night": "#585B56",
+  "on_night": "#F3E7D4",
+  "on_night_muted": "#E3D5C1",
+  "surface": "#E76B74",
+  "paper": "#585B56",
+  "on_paper": "#F3E7D4"
+ },
+ "ratios": {
+  "ink/bg": 5.644580374892305,
+  "ink_muted/bg": 4.635190138122935,
+  "ink_muted/bg_raised": 5.180968753620256,
+  "on_paper/paper": 5.644580374892305,
+  "on_night/night": 5.644580374892305,
+  "on_night_muted/night": 4.778434431910624,
+  "accent_ink/bg": 4.697295309246621,
+  "accent/bg(图形≥3)": 2.896742151922676
+ },
+ "problems": [],
+ "verdict": "PASS",
+ "fingerprint": "e5c30546bc6896c14da84849c90ea4575043e5a92e15f48051db3208ce8ccd2f",
+ "scale12": {
+  "app-bg": "EEEEEE",
+  "sub-bg": "E1E2E1",
+  "el-bg": "F8C8D1",
+  "el-hover": "F6B6C2",
+  "el-active": "F39EAE",
+  "border": "AE9E8B",
+  "border-strong": "716F6C",
+  "solid": "9A8E8E",
+  "solid-hover": "925D61",
+  "text-low": "795254",
+  "text-high": "5B4A2F",
+  "ink-deep": "443823"
+ }
+}

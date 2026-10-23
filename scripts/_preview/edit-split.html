@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>夜松</title>
+<!-- layout-recipe: EDIT-SPLIT(0.14) 声明色板: 01161E,124559,598392,6E8F91,99AE9E,9CB7B5,AEC3B0,EFF6E0,F8FBF1 跨度序列: 6+5/8/5+4+3/2+8+2/4xKPI/6 明暗: 全浅+深色点缀 -->
+<style>:root{
+  --night:#01161E;--pale:#EFF6E0;--mist:#6E8F91;--sage:#9CB7B5;
+  --surface:#AEC3B0;--ink:#01161E;--ink2:#124559;--accent:#598392;
+  --card:#F8FBF1;--line:#99AE9E;
+  --serif:'Noto Serif SC','Source Han Serif SC','Songti SC',Georgia,serif;
+  --sans:-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+  --display:var(--sans);
+  --mono:ui-monospace,'SF Mono',Consolas,monospace;
+}
+:lang(zh){text-autospace:normal;line-break:strict}
+h1,h2{text-wrap:balance}
+p{text-wrap:pretty}
+:lang(zh) :is(h1,h2,h3){font-feature-settings:"palt" 1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--pale);color:var(--ink);font:400 16px/1.75 var(--sans)}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{max-width:1200px;margin:0 auto;padding:0 48px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:24px}
+:focus-visible{outline:3px solid var(--sage);outline-offset:3px}
+.kicker{display:flex;align-items:center;gap:10px;font:700 12px/1.6 var(--sans);
+         letter-spacing:.28em;color:var(--accent-ink,var(--accent));margin-bottom:14px}
+.kicker::before{content:"";width:24px;height:1px;background:var(--accent)}
+.hairline{border:0;border-top:1px solid var(--line)}
+.mono{font:400 12px/1.6 var(--mono);letter-spacing:.05em;opacity:.62}
+.btn{display:inline-block;background:var(--ink);color:var(--pale);font:700 15px/1 var(--sans);
+      padding:16px 32px;border-radius:10px}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.ghost-num{font:900 clamp(96px,12vw,160px)/1 var(--serif);color:transparent;
+            -webkit-text-stroke:1px var(--line);pointer-events:none}
+.cross{position:absolute;width:11px;height:11px;pointer-events:none}
+.cross::before{content:"";position:absolute;left:5px;top:0;width:1px;height:11px;background:var(--ink2);opacity:.5}
+.cross::after{content:"";position:absolute;top:5px;left:0;width:11px;height:1px;background:var(--ink2);opacity:.5}
+.side-label{position:absolute;writing-mode:vertical-rl;font:600 11px/1.8 var(--mono);
+             letter-spacing:.3em;color:var(--ink2);opacity:.55;pointer-events:none}
+.bg-motif{position:absolute;pointer-events:none;opacity:.07}
+.dark .bg-motif{opacity:.12}
+section{padding:96px 0}
+section .sub{padding:64px 0 0}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{background:var(--surface);text-align:left;padding:12px 18px;font-weight:700}
+td{padding:12px 18px;border-top:1px solid var(--line)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+@media (max-width:900px){.grid>*{grid-column:1/-1!important}section{padding:64px 0}.wrap{padding:0 24px}}
+
+body{background:#FFFFFF}
+.hero{display:grid;grid-template-columns:6fr 5fr;gap:56px;align-items:center;padding:64px 0 88px}
+.hero h1{font:800 clamp(40px,5.8vw,76px)/1.14 var(--sans);letter-spacing:0.01em;color:var(--ink)} 
+.hero h1 em{font-style:normal;color:var(--ink2)}
+.hero .lede{font-size:16.5px;line-height:1.7;color:var(--ink2);margin:20px 0 26px;max-width:44ch}
+.stats{display:flex;gap:44px;margin-top:36px}
+.stats .n{font:800 clamp(26px,2.6vw,34px)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--accent-ink,var(--accent))}
+.stats .l{font-size:12.5px;color:var(--ink2);margin-top:6px}
+.art-frame{border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(17,22,30,.10)}
+.claim{max-width:66ch;margin:0 auto}
+.claim h2{font:700 clamp(28px,3.4vw,42px)/1.25 var(--serif);margin-bottom:14px;
+          -webkit-text-stroke:.4px currentColor}
+.claim-points{display:flex;gap:40px;margin-top:30px;flex-wrap:wrap}
+.claim-points>div{max-width:230px}
+.claim-points .no{font:700 13px var(--mono);color:var(--accent-ink,var(--accent))}
+.claim-points p{font-size:13.5px;color:var(--ink2);margin-top:6px}
+.features{display:grid;grid-template-columns:5fr 4fr 3fr;gap:24px}
+.quoteband{background:var(--pale);border-radius:16px;padding:56px 40px}
+.quote{grid-column:2/span 8;text-align:center}
+.quote p{font:700 clamp(24px,3vw,38px)/1.5 var(--serif)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi{border-radius:14px;padding:26px 24px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi .n{font:800 clamp(26px,2.4vw,34px)/1 var(--sans);font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12.5px;margin-top:8px;opacity:.82}
+.dark-cta{background:var(--night);color:var(--pale)}
+@media (max-width:900px){.hero{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<header style="background:var(--pale)"><div class="wrap" style="display:flex;justify-content:space-between;align-items:center;padding-top:20px;padding-bottom:20px"><a href="#" style="font:700 17px var(--serif);color:var(--night)">夜松</a><nav style="display:flex;gap:24px;font-size:13.5px;font-weight:600"><a style="color:var(--ink2)" href="#s1">一览</a><a style="color:var(--ink2)" href="#s2">方法</a><a style="color:var(--ink2)" href="#cta">联系</a></nav></div></header>
+<div class="wrap"><section class="hero" style="position:relative">
+  <span class="cross" style="right:0;top:-6px"></span>
+  <span class="cross" style="left:0;bottom:-14px"></span>
+  <div><p class="kicker">Night Pine · 一句话定位(替换)</p>
+    <h1>释放手作的<br>温度与<em>分寸感</em>。</h1>
+    <p class="lede">两行以内的价值陈述,给一个具体的、可验证的承诺。(替换)</p>
+    <div style="display:flex;gap:14px;margin-bottom:8px">
+      <a class="btn" style="background:var(--night);color:#fff" href="#cta">主行动</a>
+      <a class="btn ghost" href="#s1">看方法</a></div>
+    <div class="stats">
+      <div><div class="n">300+</div><div class="l">件作品(替换)</div></div>
+      <div><div class="n">50+</div><div class="l">种木料(替换)</div></div>
+      <div><div class="n">1000+</div><div class="l">小时工时(替换)</div></div></div></div>
+  <div class="art-frame"><svg xmlns='http://www.w3.org/2000/svg' width='100%' viewBox='0 0 360 360' style='display:block' aria-hidden='true'><rect width='360' height='360' fill='#FFFFFF'/><rect x='0' y='0' width='120' height='120' fill='#EFF6E0'/><circle cx='60.0' cy='60.0' r='45.6' fill='#598392'/><polygon points='180.0,9.6 230.4,60.0 180.0,110.4 129.6,60.0' fill='#EFF6E0'/><rect x='240' y='0' width='120' height='120' fill='#FFFFFF'/><g transform='rotate(0 300.0 60.0)'><path d='M240 120 L240 0 A120 120 0 0 1 360 120 Z' fill='#9CB7B5'/></g><rect x='0' y='120' width='120' height='120' fill='#EFF6E0'/><circle cx='60.0' cy='180.0' r='40.800000000000004' fill='#598392'/><circle cx='60.0' cy='180.0' r='19.2' fill='#EFF6E0'/><rect x='120' y='120' width='120' height='120' fill='#EFF6E0'/><rect x='120' y='120' width='120' height='120' fill='#124559'/><circle cx='300.0' cy='180.0' r='45.6' fill='#124559'/><circle cx='60.0' cy='300.0' r='40.800000000000004' fill='#598392'/><circle cx='60.0' cy='300.0' r='19.2' fill='#FFFFFF'/><rect x='120' y='240' width='120' height='120' fill='#EFF6E0'/><g transform='rotate(0 300.0 300.0)'><path d='M240 240 A60.0 60.0 0 0 1 240 360 Z' fill='#9CB7B5'/></g></svg></div>
+</section>
+<section class="sub" id="s1" style="position:relative">
+  <div class="bg-motif" style="left:-60px;top:-20px"><svg width='300' height='300' viewBox='0 0 300 300' aria-hidden='true' style='display:block'><g fill='none' stroke='#9CB7B5' stroke-width='2'><circle cx='150.0' cy='150.0' r='136.0'/><circle cx='150.0' cy='150.0' r='99.0'/><circle cx='150.0' cy='150.0' r='60.0'/></g><g fill='none' stroke='#598392' stroke-width='2'><circle cx='150.0' cy='150.0' r='21.000000000000004'/></g><circle cx='150.0' cy='150.0' r='8.0' fill='#01161E'/></svg></div>
+  <div class="claim" style="position:relative">
+  <p class="kicker">主张</p><h2>一节只说一件事，说透。(替换)</h2>
+  <p style="color:var(--ink2)">支持句:给出可验证的细节与数字,不写形容词。(替换)</p>
+  <div class="claim-points"><div><span class="no">01</span><p>要点一:具体可验证(替换)</p></div><div><span class="no">02</span><p>要点二:数字与出处(替换)</p></div></div></div></section>
+<section class="sub"><div class="features">
+  <article style="background:var(--card);border-radius:14px;padding:26px 26px 20px;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:190px"><span style="position:absolute;right:12px;top:0;font:900 84px var(--serif);color:var(--surface)">01</span><h3 style="font:800 19px var(--serif);position:relative">条目一(替换)</h3><p style="font-size:13.5px;color:var(--ink2);position:relative;margin-top:6px">属性 · 属性</p><div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;position:relative"><span style="font:800 17px var(--serif)">¥ —</span><span style="font-size:12.5px;color:var(--ink2)">周期 — 天</span></div></article>
+  <article style="background:var(--card);border-radius:14px;padding:26px 26px 20px;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:190px"><span style="position:absolute;right:12px;top:0;font:900 84px var(--serif);color:var(--surface)">02</span><h3 style="font:800 19px var(--serif);position:relative">条目二(替换)</h3><p style="font-size:13.5px;color:var(--ink2);position:relative;margin-top:6px">属性 · 属性</p><div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;position:relative"><span style="font:800 17px var(--serif)">¥ —</span><span style="font-size:12.5px;color:var(--ink2)">周期 — 天</span></div></article>
+  <article style="background:var(--card);border-radius:14px;padding:26px 26px 20px;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:190px"><span style="position:absolute;right:12px;top:0;font:900 84px var(--serif);color:var(--surface)">03</span><h3 style="font:800 19px var(--serif);position:relative">条目三(替换)</h3><p style="font-size:13.5px;color:var(--ink2);position:relative;margin-top:6px">属性 · 属性</p><div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;position:relative"><span style="font:800 17px var(--serif)">¥ —</span><span style="font-size:12.5px;color:var(--ink2)">周期 — 天</span></div></article></div></section>
+<section class="sub"><div class="grid"><div class="quoteband"><div class="quote">
+  <p>「一句客户原话,带时间与细节。(替换)」</p>
+  <footer style="margin-top:14px;font-size:13px;color:var(--ink2)">—— 署名,年份</footer></div></div></div></section>
+<section class="sub"><div class="kpis"><div class="kpi" style="background:#01161E;color:var(--pale)"><span class="n">12 年</span><span class="l">手作年限(替换)</span></div><div class="kpi" style="background:#124559;color:var(--pale)"><span class="n">16,601</span><span class="l">件交付(替换)</span></div><div class="kpi" style="background:#598392;color:var(--pale)"><span class="n">33%</span><span class="l">回购率(替换)</span></div><div class="kpi" style="background:#9CB7B5;color:var(--ink)"><span class="n">2%</span><span class="l">瑕疵率(替换)</span></div></div></section>
+</div>
+<section class="dark-cta" id="cta"><div class="wrap" style="max-width:66ch;text-align:center">
+  <h2 style="font:800 clamp(28px,3.6vw,44px)/1.25 var(--serif)">收尾行动,先具体,再干脆。(替换)</h2>
+  <p style="color:var(--mist);margin:14px 0 26px">说明第一步做什么、成本与承诺。(替换)</p>
+  <a class="btn" style="background:var(--pale);color:var(--night)" href="#">主行动(替换)</a></div></section>
+<footer><div class="wrap" style="padding-top:26px;padding-bottom:40px;font-size:13px;color:var(--ink2);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <span>© 2026 夜松</span><span>配色与布局:aesthete-agent 配方 EDIT-SPLIT(机械验证)</span></div></footer>
+</body></html>

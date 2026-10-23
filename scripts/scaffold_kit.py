@@ -46,6 +46,13 @@ def derive(theme_colors, brand, brand_en, use_when):
     hexes = [h.upper().lstrip("#") for h in theme_colors["hexes"]]
     ranked = sorted(hexes, key=_lum_lin)
     pale = ranked[-1]                                   # 最浅 = 亮幕大底/暗幕主字
+    # PALE 必须真的浅:中明度色作大面积背景显脏(用户铁律 2026-10-22)——向白推进至相对亮度≥0.87
+    for _ in range(6):
+        if _contrast(pale, "FFFFFF") <= 1.30:
+            break
+        pale = _mix(pale, "FFFFFF", 0.45)
+    hexes = [h if h != ranked[-1] else pale for h in hexes]
+
     night = ranked[0]                                   # 最深 = 暗幕大底/亮幕正文
     mids = [h for h in hexes if h not in (pale, night)]
     surface = ranked[-2] if len(ranked) > 2 else mids[0]
@@ -175,13 +182,13 @@ table.gridtable{width:100%;border-collapse:collapse;background:var(--card);borde
 .gridtable th{background:var(--surface);text-align:left;font-weight:700;padding:13px 20px}
 .gridtable td{padding:13px 20px;border-top:1px solid var(--line)}
 .gridtable td.num{font-variant-numeric:tabular-nums;font-weight:700}
-.night-voice{position:relative;background:var(--night);color:var(--pale);padding:110px 0;overflow:hidden}
+.night-voice{position:relative;background:var(--night);color:var(--pale);padding:96px 0;overflow:hidden}
 .night-voice::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.07;pointer-events:none}
 .night-voice .wrap{position:relative;z-index:2}
 .night-voice blockquote{font-family:var(--serif);font-weight:700;font-size:clamp(26px,4.6vw,46px);line-height:1.5;max-width:900px}
 .night-voice blockquote em{font-style:normal;color:var(--sage)}
 .night-voice footer{margin-top:26px;font:400 14px var(--sans);color:var(--mist)}
-.night-book{position:relative;background:var(--night);color:var(--pale);padding:96px 0 110px;overflow:hidden}
+.night-book{position:relative;background:var(--night);color:var(--pale);padding:96px 0;overflow:hidden}
 .night-book::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.07;pointer-events:none}
 .night-book .wrap{position:relative;z-index:2;display:flex;gap:40px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .night-book h2{font-family:var(--serif);font-weight:900;font-size:clamp(30px,4.6vw,50px);line-height:1.25;margin-bottom:14px}
