@@ -1,5 +1,5 @@
 ---
-version: 0.16.0
+version: 0.17.0
 name: aesthete-agent
 description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 119-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words — color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
 ---
@@ -15,6 +15,21 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 4. **Bounded verification**: build fully → one batched review → one batched fix round → at most one more confirmation → **stop polishing**.
 5. **Candidate discipline**: user verdicts require ≥2 full-page candidates (`make_variants.py` builds the comparison sheet); a single proposal is not sent for review.
 6. **Verdict write-back**: every accept/reject lands in `profile.json` (machine-read) and `critique.md` necropsies (failure modes) — no write-back, no growth.
+
+### Task → command (30 seconds)
+
+| Task | Use |
+|---|---|
+| New palette for a brief | `match --brief` |
+| Judge an existing page | `evidence page.html --palette` |
+| Fix an existing page | `patch page.html --palette --apply` |
+| Chart / data colors | `chartpal --kind` (supersedes `semantic`) |
+| Full-page starting point | `scaffold --theme/--palette` (AUTO routes dark/light) |
+| Single scene mockup | `scene --kind` |
+| Cross-register exploration | `directions` |
+| Side-by-side for review | `make_variants` |
+| Token sheet | `tokens --palette/--theme` |
+| Render review loop | `loop page.html --palette` |
 
 ## Capability × Boundary Quick Reference
 
@@ -42,6 +57,7 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 | Render reconciliation | `qc shot.png --tokens tokens.json` reconciles the rendered pixels against declared tokens: background authenticity, off-palette intrusions with area shares, digest-bound verdict — the mechanical gate of the render feedback loop | Static checks cannot see rendering; declared ≠ rendered until proven | render-loop.md |
 | Typography system | `references/typography-system.md` — display-grade CJK+Latin typesetting law: autospace base, tracking-by-size law, line-height contrast, eyebrow/display/deck recipes, variable-font loading discipline, numeric typography; `typescale --fluid` emits the ramp as fluid clamps plus the typesetting base CSS | Rules are paste-ready code, not prose; progressive-enhancement items degrade safely | cjk-typography.md |
 | Layout composition | `references/layout-composition.md` — 12-col base, span vocabulary (no consecutive repeats, 4+4+4 once max), asymmetry ratios 7:5/8:4/5:8, spacing tiers 96/64/40, dark-light act alternation, decoration dosage caps; `scaffold --recipe` emits five parameterized full-page layouts (EDIT-SPLIT / BLUEPRINT / SWISS-POSTER / EDITORIAL-MAG / DARK-FOUR-ACT; default AUTO routes by palette temperament) | Recipes are starts — replace content, then gate | layout-composition.md |
+| Typography aesthetics | `references/typography-aesthetics.md` — font temperament spectrum, CJK x Latin pairing table (each pair rendered-verified), fake-bold ban (800/900 without @font-face = FAIL; degradation chain: subset Black > system VF > 700 cap), display-drama rules (ratio 1.414 sweet spot, giant-type trinity), and the --fonts asset pipeline spec | Health rules live in cjk-typography.md; this file decides what looks designed | cjk-typography.md |
 | Quantified rationale | `narrate --palette/--theme` turns the measured report gates into a bilingual numbers-only rationale (contrast pair, blind sims, slop scan, score, fingerprint) ready to forward | Every number traces to the report; templates add no adjectives | critique.md |
 | Exemplar injection | `exemplar --kind landing --register light` retrieves a render-reviewed, gate-passed exemplar page (five recipes x five boards, kind/register metadata in header) — code to imitate-adapt: swap colors to your declared tokens, replace content with real copy | Exemplars teach structure and dosage; zero-hit retrieval is an explicit error, never a guess | layout-composition.md |
 | Targeted patches | `patch page.html --palette ... [--apply]` turns audit findings into literal search/replace pairs (muddy-background tint, font floor, CJK tracking, contrast pairs); `--apply` makes a byte-identical .bak, applies, re-audits | Literal patches apply only where the string truly exists — everything else degrades to manual guidance | render-loop.md |
@@ -136,7 +152,7 @@ On user rejection, run a **necropsy** first (write the transferable failure mode
 ## Verdict write-back & customization
 
 - **Accepted-design intake**: `python "$S" house --name "Project final" --hexes ... --from-proj project` — joins the library and gets match-boosted.
-- **Custom registers**: edit `registers` in `profile.json` (key = register name, value with theme/style_tags/accent_max_area); `match --register` picks it up. A new domain = a new entry, not new code.
+- **Register vocabulary**: the built-in register table ships with the engine (medical + frontend families). `profile.json` `registers` stores per-user accent caps and theme overrides that `match` reads; adding a brand-new domain's keywords is a code-level extension, not a config edit — `--register` accepts only built-in names.
 - **Self-test**: `python "$S" selftest` — WCAG boundaries/OKLCH round-trip/slop signatures; non-zero exit = engine untrustworthy.
 
 ## Reference docs (30-second routing)

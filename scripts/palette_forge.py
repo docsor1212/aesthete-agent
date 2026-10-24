@@ -780,6 +780,46 @@ def _export_prompt(hexes):
     return NL.join(lines)
 
 
+def cmd_direct(args):
+    """色彩导演(0.19):整页配色机械度量——温度旅程/饱和曲线/张力/主色戏剧(渲染实证规则集)。
+    --zones "hex:share,..." 单页快判;--manifest lab_zones.json 批量;--bold 标品牌页(大域准入)。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import color_director
+    except ImportError as e:
+        print(f"缺 color_director: {e}", file=sys.stderr)
+        sys.exit(2)
+    if args.manifest:
+        cases = json.load(open(args.manifest, encoding="utf-8"))
+        n_pass = 0
+        for c in cases:
+            res = color_director.analyze(c["page"], [tuple(z) for z in c["zones"]],
+                                         acts=[list(map(tuple, a)) for a in c["acts"]] if c.get("acts") else None,
+                                         focal=tuple(c["focal"]) if c.get("focal") else None,
+                                         bold=c.get("bold", False), last_act_loud=c.get("last_act_loud"),
+                                         accent_share=c.get("accent_share"), palette=c.get("palette"),
+                                         cap=c.get("cap"), only=c.get("only"))
+            print(f"{res['page']} → {res['verdict']}")
+            for f in res["findings"]:
+                if f["verdict"] == "FAIL":
+                    print(f"  [FAIL] {f['rule']}: {f['evidence']}")
+            n_pass += res["verdict"] == "PASS"
+        print(f"合计: {n_pass}/{len(cases)} PASS")
+        sys.exit(0)
+    if not args.zones:
+        print("--zones 或 --manifest 必给其一", file=sys.stderr)
+        sys.exit(2)
+    zones = color_director._parse_zones(args.zones)
+    res = color_director.analyze(args.page or "cli", zones, bold=args.bold)
+    print(f"裁决: {res['verdict']}")
+    for f in res["findings"]:
+        mark = "PASS" if f["verdict"] == "PASS" else "FAIL"
+        print(f"  [{mark}] {f['rule']}: {f['evidence']}")
+        if f["verdict"] == "FAIL" and f.get("fix"):
+            print(f"         ↳ {f['fix']}")
+    sys.exit(0 if res["verdict"] == "PASS" else 1)
+
+
 def cmd_report(args):
     """一键验收工件: 四道机械闸(对比度/色盲/AI-slop/评分)聚合成单一 PASS/FAIL JSON。
     退出码=裁决(0=PASS, 1=FAIL)。"""
@@ -809,6 +849,19 @@ def cmd_report(args):
     gates["ai_slop"] = {"pass": rc == 0, "detail": out[-160:]}
     rc, out = _run("score", "--palette", ",".join(hexes))
     gates["score"] = {"pass": rc == 0, "detail": out[-160:]}
+    if getattr(args, "zones", None):
+        # 第五闸(0.19):主色戏剧——主色档位与占面 cap(渲染实证规则,--zones 给页面占比)
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import color_director as _cd
+            zl = _cd._parse_zones(args.zones)
+            share_map = dict(zl)
+            acc = max(hexes, key=lambda h: _cd.oklch_from_hex(h)[1])
+            accent_share = share_map.get(acc, max((sh for _, sh in zl), default=0.0))
+            ok, ev = _cd.rule_drama(hexes, accent_share, bold=bool(getattr(args, "bold", False)))
+            gates["drama"] = {"pass": bool(ok), "detail": ev}
+        except Exception as e:
+            gates["drama"] = {"pass": True, "detail": f"drama 闸跳过: {e}"}
     verdict = "PASS" if all(g["pass"] for g in gates.values()) else "FAIL"
     # 0.8.0 量化叙事:几闸过/拦下几项发现——检查的收益给数字,不只给结论
     n_pass = sum(1 for g in gates.values() if g["pass"])
@@ -1504,6 +1557,14 @@ def cmd_match(args):
     if args.no_flags:
         pals = [p for p in pals if not p["flags"]]
     print(f"register={reg}  theme_penalty_dark={pen}  candidates={len(pals)}")
+    try:
+        _tp = os.path.join(os.path.dirname(os.path.abspath(LIBRARY)), "themes.json")
+        _td = json.load(open(_tp, encoding="utf-8")) if os.path.exists(_tp) else {}
+        for _rr in (_td.get("register_recipes") or {}).values():
+            if _rr.get("register") == reg:
+                print(f"配方: {_rr.get('name')}——{_rr.get('strategy')}")
+    except Exception:
+        pass
     for p in pals[: args.limit]:
         stars = "*" * p["tier"] if p["tier"] else "new"
         fl = " !" + "!".join(p["flags"]) if p["flags"] else ""
@@ -1730,6 +1791,14 @@ def cmd_scaffold(args):
         print(str(e), file=sys.stderr)
         sys.exit(2)
     out = args.out or (args.brand or "scaffold").lower().replace(" ", "-") + "-" + recipe.lower().replace("_", "-") + ".html"
+    os.makedirs(os.path.dirname(os.path.abspath(out)) or ".", exist_ok=True)
+    fonts_mode = (getattr(args, "fonts", "none") or "none").lower()
+    if fonts_mode != "none":
+        import font_kit
+        html, copied = font_kit.emit_faces(os.path.dirname(os.path.abspath(out)), fonts_mode, html,
+                                           log=lambda m: print(f"fonts: {m}"))
+        if copied:
+            print(f"fonts: {fonts_mode} → {', '.join(os.path.basename(c) for c in copied)}")
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         f.write(html)
     print(f"scaffold: {out}")
@@ -2282,7 +2351,8 @@ def main():
     s.set_defaults(fn=cmd_matrix)
 
     s = sub.add_parser("semantic")
-    s.add_argument("--count", type=int, default=8)
+    s.add_argument("--count", type=int, default=8,
+                   help="deprecated: 图表/分类用色已并入 chartpal --kind categorical,本命令仅保留兼容")
     s.add_argument("--base", default=None, help="基准色(取其色相)")
     s.add_argument("--hue", type=float, default=210.0, help="无 --base 时的起始色相")
     s.set_defaults(fn=cmd_semantic)
@@ -2307,8 +2377,17 @@ def main():
     s.set_defaults(fn=cmd_visualize)
 
     s = sub.add_parser("report")
+    s.add_argument("--zones", default=None, help="页面区域占比 hex:share,...(给出即加第五闸 drama)")
+    s.add_argument("--bold", action="store_true", help="品牌页(drama 准入放宽)")
     s.add_argument("--palette", required=True)
     s.set_defaults(fn=cmd_report)
+
+    s = sub.add_parser("direct", help="色彩导演:整页配色机械度量(0.19)")
+    s.add_argument("--zones", default=None, help="hex:share,hex:share,...")
+    s.add_argument("--manifest", default=None, help="lab_zones.json 批量裁决")
+    s.add_argument("--page", default=None, help="页面名(写入报告头)")
+    s.add_argument("--bold", action="store_true", help="品牌页(大域准入)")
+    s.set_defaults(fn=cmd_direct)
 
     s = sub.add_parser("selftest")
     s.set_defaults(fn=cmd_selftest)
@@ -2349,6 +2428,8 @@ def main():
     s.add_argument("--palette", help="逗号分隔 hex(无主题时用)")
     s.add_argument("--recipe", default="AUTO",
                    help="布局配方: AUTO(默认,按色板气质路由)/DARK-FOUR-ACT/EDIT-SPLIT/BLUEPRINT/SWISS-POSTER/EDITORIAL-MAG")
+    s.add_argument("--fonts", default="none", choices=["none", "preset", "auto"],
+                   help="字体资产: none(系统栈,禁 900)/preset(随包子集)/auto(现场子集,缺 fontTools 降级 preset)")
     s.add_argument("--brand", default=None, help="品牌名(默认取主题)")
     s.add_argument("--brand-en", dest="brand_en", default=None)
     s.add_argument("--use-when", dest="use_when", default="")

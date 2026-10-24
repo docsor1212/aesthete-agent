@@ -6,10 +6,16 @@
 
 **Mechanically validated frontend aesthetics for AI agents.** An agent skill (and MCP server) that plans, validates, and exports color systems — so your agent stops shipping purple-gradient AI slop and starts shipping palettes that pass WCAG, survive color-blindness, and read as designed.
 
+```bash
+npx skills add docsor1212/aesthete-agent   # 30 seconds; also: skillhub / clawhub / MCP uvx — see Install
+```
+
+Other tools give your agent taste advice. This one gives it **gates**: nothing ships until it passes four mechanical checks (WCAG contrast, three color-blindness simulations, AI-slop detection, scorecard) — backed by a 119-palette evidence library, five full-page layout recipes, and a render-verified review loop.
+
 [![install](https://img.shields.io/badge/install-npx%20skills%20add%20docsor1212%2Faesthete--agent-blue)](https://github.com/docsor1212/aesthete-agent)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![palette library](https://img.shields.io/badge/palette%20library-119%20curated-orange)](#the-evidence-library)
-[![tests](https://img.shields.io/badge/tests-39%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-125%20passing-brightgreen)](tests/)
 
 ## Why
 

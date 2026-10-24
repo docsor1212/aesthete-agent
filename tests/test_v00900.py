@@ -67,7 +67,7 @@ class TestAuditPage(unittest.TestCase):
            "body{background:#8B5CF6;color:#DDD6FE}"
            "h1{background:linear-gradient(90deg,#8B5CF6,#C084FC);font-family:Inter,sans-serif}"
            ".card{backdrop-filter:blur(12px);font-size:9px;border-radius:36px}"
-           ".chip{border-radius:32px}.pill{border-radius:36px}.blob{border-radius:44px}"
+           ".chip{border-radius:32px}.pill{border-radius:36px}.blob{border-radius:44px}.ico::after{content:'🚀'}"
            "</style></head><body><h1>Hero 🚀</h1><div class='card'>x</div></body></html>")
 
     def _write(self, td, name, text):

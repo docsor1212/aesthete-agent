@@ -137,10 +137,37 @@ def fix_contrast(hex_fg, hex_bg, need=4.5):
 def audit_page(html, declared_palette=None, floor=12.0):
     """→ findings [{sev, check, msg, fix}], inventory。"""
     findings = []
+    # 0.17 三刀:①剥注释(教程/评审页提"渐变"一词不再假阳性);②var() 令牌解析
+    # (令牌化页面的对比对/大底不再是盲区,含 var(--x, fallback) 与两轮链式解析);
+    # ③大底选择器放宽到结构语义类名(hero/banner/band/cta/cover/bleed/act)。
+    html = re.sub(r"<!--.*?-->", " ", html, flags=re.S)
+    varmap = {}
+    for m in re.finditer(r"(--[\w-]+)\s*:\s*([^;{}]+)[;}]", html):
+        val = _decl_value(m.group(2))
+        if val:
+            varmap[m.group(1)] = "#" + val
+
+    def _sub_var(text):
+        def repl(mm):
+            name, fb = mm.group(1), (mm.group(2) or "").strip()
+            if name in varmap:
+                return varmap[name]
+            if fb:
+                fbv = _decl_value(fb)
+                if fbv:
+                    return "#" + fbv
+            return mm.group(0)
+        return re.sub(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)", repl, text)
+
+    for _ in range(2):
+        html = _sub_var(html)
+    # AI 签名三查只看样式域(<style>+内联 style)——正文/注释提及不再是假阳性
+    css_scope = " ".join(re.findall(r"<style[^>]*>(.*?)</style>", html, re.S | re.I))
+    css_scope += " ".join(re.findall(r'style="([^"]+)"', html))
     inv = collect(html)
 
     # 1 禁渐变(P0)
-    grads = GRAD_RE.findall(html)
+    grads = GRAD_RE.findall(css_scope)
     if grads:
         stops = [normalize(m.group(1)) for m in re.finditer(
             r"gradient\([^)]{0,80}?(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})\b", html)][:4]
@@ -234,14 +261,52 @@ def audit_page(html, declared_palette=None, floor=12.0):
                          "fix": "换跨度词汇:7+5/5+4+3/2+8+2/6+3+3,或不对称比 7:5/8:4/5:8"})
     tier_ok = {40, 48, 64, 80, 96, 120}
     bad_pad = []
-    for m in re.finditer(r"(?:^|\n)\s*section[^{]*\{[^}]*?padding(?:-top)?:\s*(\d+)px", html):
+    pad_vals = []
+    # 响应式密度覆盖(@media 内)不是越档——节距两查先剥 @media 块
+    html_no_media = re.sub(r"@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}", " ", html)
+    for m in re.finditer(r"(?:^|[\n;}])\s*section[^{]*\{[^}]*?padding(?:-top)?:\s*(\d+)px", html_no_media):
         v = int(m.group(1))
+        pad_vals.append(min(tier_ok, key=lambda x: abs(x - v)) if abs(v - min(tier_ok, key=lambda x: abs(x - v))) <= 4 else v)
         if v not in tier_ok and min(abs(v - x) for x in tier_ok) > 4:
             bad_pad.append(v)
     if bad_pad:
         findings.append({"sev": "P2", "check": "section_spacing_tier",
                          "msg": "节距越档: %s——只用 96/64/40 三档(海报风 120/80/48)" % sorted(set(bad_pad)),
                          "fix": "节距三级制:96(幕间)/64(分节)/40(紧凑);保持 8 的倍数"})
+    # 4c-2 节距单调(0.17,布局卷规则):≥80% 的节同档且节≥4 → 机械感
+    if len(pad_vals) >= 4:
+        top = max(set(pad_vals), key=pad_vals.count)
+        if pad_vals.count(top) / len(pad_vals) >= 0.8:
+            findings.append({"sev": "P2", "check": "section_spacing_monotony",
+                             "msg": "节距单调:%d/%d 节同一档 %spx——每节同距=机械感的根源" % (
+                                 pad_vals.count(top), len(pad_vals), top),
+                             "fix": "节距要有节奏:递减进入(96→64→40)或呼吸交替;幕间骤停 128 每页≤1"})
+    # 4c-3 主角倍率(0.17,布局卷规则):display 巨标与正文比 <1.5 = 一屏无主角
+    h1_sizes = []
+    for m in re.finditer(r"h1[^{]*\{[^}]*?font-size:\s*([^;}]+)", html):
+        tok = m.group(1)
+        cm = re.search(r"clamp\([^,]+,\s*[\d.]+vw\s*,\s*([\d.]+)px\)", tok)
+        if cm:
+            h1_sizes.append(float(cm.group(1)))
+            continue
+        pm = re.search(r"([\d.]+)px", tok)
+        if pm:
+            h1_sizes.append(float(pm.group(1)))
+    bm = re.search(r"body\s*\{[^}]*?font:\s*400\s+([\d.]+)px", html)
+    body_px = float(bm.group(1)) if bm else 16.0
+    if h1_sizes:
+        ratio = max(h1_sizes) / body_px
+        if ratio < 1.5:
+            findings.append({"sev": "P2", "check": "protagonist_ratio",
+                             "msg": "主角倍率 %.2f(<1.5)——巨标与正文拉不开,一屏无主角" % ratio,
+                             "fix": "巨标/正文 ≥2.5 成剧(理想 3-4);级差 ≥1.25 肉眼才辨层级"})
+    # 4c-4 下沉前置(0.17,布局卷规则):initial-letter 需 ≥3 段正文承接
+    if "initial-letter" in html:
+        n_p = len(re.findall(r"<p[\s>]", html))
+        if n_p < 3:
+            findings.append({"sev": "P2", "check": "dropcap_precondition",
+                             "msg": "首字下沉但全文仅 %d 段——下沉需 ≥3 段正文承接,否则成孤行装饰" % n_p,
+                             "fix": "下沉用于多段正文节(首段行数 ≥ 下沉行+1);短文节删下沉"})
     kf_names = set(re.findall(r"@keyframes\s+([\w-]+)\s*\{(?:(?!@keyframes)[\s\S])*?translateX", html))
     marquees = sum(len(re.findall(r"animation(?:-name)?\s*:[^;}]*\b" + re.escape(n) + r"\b", html))
                    for n in kf_names)
@@ -249,8 +314,9 @@ def audit_page(html, declared_palette=None, floor=12.0):
         findings.append({"sev": "P2", "check": "marquee_count",
                          "msg": "跑马灯/无限横移动画 %d 处(每页≤1)" % marquees,
                          "fix": "一页一条跑马灯;其余改静态带"})
-    # 4d 大面积背景脏色检查:结构级标签的背景须为浅 tint/低饱和/深暗幕
-    for m in re.finditer(r"(?:^|\n)\s*(?:body|section|header|footer|main|nav|aside)[^{]*"
+    # 4d 大面积背景脏色检查:结构级标签或结构语义类名的背景须为浅 tint/低饱和/深暗幕
+    for m in re.finditer(r"(?:^|[\n;}]|<style[^>]*>)\s*(?:body|section|header|footer|main|nav|aside"
+                         r"|\.[\w-]*(?:hero|banner|band|cta|cover|bleed|act)[\w-]*)[^{]*"
                          r"\{[^}]*?background(?:-color)?:\s*([^;}]+)", html, re.I):
         col = _decl_value(m.group(1))
         if not col:
@@ -263,19 +329,26 @@ def audit_page(html, declared_palette=None, floor=12.0):
                 "msg": "大面积背景用了中饱和中明度色 #%s(显脏风险)" % col,
                 "fix": "大面积背景三选一:向白 tint 到 L≥0.85 / 低饱和深暗幕(L≤0.25) / 干脆白底+细边"})
     # 5 AI 默认签名
-    if GLASS_RE.search(html):
+    if GLASS_RE.search(css_scope):
         findings.append({"sev": "P1", "check": "glassmorphism",
                          "msg": "玻璃拟态(backdrop-filter/filter blur)——高 AI 默认签名,且可读性不可控",
                          "fix": "实色卡片面 + 发丝线描边替代磨砂层"})
-    if EMOJI_RE.search(html):
-        n = len(EMOJI_RE.findall(html))
+    if EMOJI_RE.search(css_scope):
+        n = len(EMOJI_RE.findall(css_scope))
         findings.append({"sev": "P2", "check": "emoji",
                          "msg": "emoji 出现 %d 处(图标位尤甚)" % n,
                          "fix": "线性 SVG 图标或纯文字 pills 替代"})
-    if DEFAULT_FONT_RE.search(html):
+    if DEFAULT_FONT_RE.search(css_scope):
         findings.append({"sev": "P2", "check": "default_font",
                          "msg": "字体栈以默认系统字开局(Inter/Roboto/Arial/Helvetica 打头)",
                          "fix": "中英混排给完整栈(苹方/雅黑/思源),标题考虑衬线对微字"})
+    # 假粗禁令(0.18,字体卷):无 @font-face 真字重时 800/900 即假粗(含 font 简写形态)
+    if (re.search(r"font-weight\s*[=:]\s*(800|900)\b", css_scope)
+            or re.search(r"font\s*:\s*(?:italic\s+)?(800|900)\b", css_scope)) \
+            and "@font-face" not in css_scope:
+        findings.append({"sev": "P3", "check": "fake_bold",
+                         "msg": "font-weight 800/900 但页面无 @font-face 真字重——合成加粗发糊",
+                         "fix": "接字体资产管线(scaffold --fonts preset/auto)或钳到 700(宁细勿假粗)"})
     radii = [float(x) for x in re.findall(r"border-radius:\s*(\d+(?:\.\d+)?)px", html)]
     if len([r for r in radii if r >= 28]) > 3:
         findings.append({"sev": "P2", "check": "radius_inflation",
@@ -290,8 +363,9 @@ def run(page, declared_palette=None, floor=12.0, out_base=None):
         html = f.read()
     findings, inv = audit_page(html, declared_palette, floor)
     n = {s: sum(1 for f in findings if f["sev"] == s) for s in ("P0", "P1", "P2")}
-    verdict = "FAIL" if n["P0"] or n["P1"] >= 2 else ("PASS" if not findings else "WARN")
-    order = {"P0": 0, "P1": 1, "P2": 2}
+    n["P3"] = sum(1 for f in findings if f["sev"] == "P3")
+    verdict = "FAIL" if n["P0"] or n["P1"] >= 2 else ("PASS" if not [f for f in findings if f["sev"] != "P3"] else "WARN")
+    order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
     findings.sort(key=lambda f: order[f["sev"]])
     with open(page, "rb") as f:
         page_fp = hashlib.sha256(f.read()).hexdigest()

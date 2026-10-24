@@ -6,10 +6,16 @@
 
 **给 AI 用的、机械验证过的前端美学引擎。** 一个 Agent Skill（同时也是 MCP 服务器）：为 AI 规划、验证、导出配色系统——让代理不再交出紫渐变的 AI 味配色，而是交付能过 WCAG、扛得住色盲模拟、经得起评审的颜色方案。
 
+```bash
+npx skills add docsor1212/aesthete-agent   # 30 秒接入；另有 skillhub / clawhub / MCP uvx，见「安装」
+```
+
+别的工具给你的智能体"品味建议"。这个给它**闸门**：四道机械检查（对比度、三色盲模拟、AI 味检测、评分卡）全过才算交付——背后是 119 块实证色板库、五套整页布局配方、渲染实证的评审闭环。
+
 [![install](https://img.shields.io/badge/install-npx%20skills%20add%20docsor1212%2Faesthete--agent-blue)](https://github.com/docsor1212/aesthete-agent)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![palette library](https://img.shields.io/badge/palette%20library-119%20curated-orange)](#实证色板库)
-[![tests](https://img.shields.io/badge/tests-39%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-125%20passing-brightgreen)](tests/)
 
 ## 为什么需要它
 
