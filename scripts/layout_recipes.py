@@ -311,7 +311,7 @@ summary{{cursor:pointer;font-weight:700;font-size:15px}}
     tiers = [("入门", "¥0", "适合个人起步。"), ("专业", "¥49/月", "适合小团队。"), ("旗舰", "联系", "适合组织。")]
     tier_html = "".join(
         f'<div class="tier{" hot" if n == "专业" else ""}">'
-        f'{"<span class=mono style=color:var(--sage)>最受欢迎</span><br>" if n == "专业" else ""}'
+        f'{"<span class=mono style=\"color:var(--pale);letter-spacing:.18em\">最受欢迎</span><br>" if n == "专业" else ""}'
         f'<strong style="font-size:16px">{n}</strong><div class="price">{pr}</div>'
         f'<p style="font-size:13px;color:var(--ink2)">{d}</p>'
         f'<a class="btn" style="margin-top:16px;background:var(--night);color:var(--pale);text-align:center" href="#">选择</a></div>'
@@ -380,6 +380,7 @@ body{letter-spacing:0.01em}
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{t["BRAND"]}</title>
 <!-- layout-recipe: SWISS-POSTER(0.14) 声明色板: {t["PALETTE_DECL"]} 间距档: 120/80/48 -->
 <style>{css}</style></head><body>
+{_stripe(t)}
 <div class="wrap"><header class="masthead">
   <strong style="font:700 18px var(--serif)">{t["BRAND"]}</strong>
   <span class="mono">SEC.00 — {t["BRAND_EN"]} — 2026</span></header>
@@ -500,15 +501,41 @@ RECIPES = {
 }
 
 
+def pick_recipe(tokens):
+    """明暗策略路由(0.16,用户铁律 2026-10-21/22):明暗由色板气质决定——
+    浅优色板浅底优先(EDIT-SPLIT),深色即品牌色的板走暗幕叙事(DARK-FOUR-ACT);
+    近中性灰阶(饱和<0.15)按墨色戏剧处理走暗幕。
+    判据用原始声明板(tokens["SRC"],非派生 PALETTE_DECL——card 恒浅/line 恒深会让派生集系统性偏向浅底):
+    HSL 明度≥0.60 占比≥2/5 视为浅优(Deep Pine 浅色占 2/5 先例,用户 v59 裁决)。"""
+    import colorsys
+    src = tokens.get("SRC") or tokens["PALETTE_DECL"]
+    hexes = [h for h in src.split(",") if h]
+    if not hexes:
+        return "DARK-FOUR-ACT"
+    light_n = 0
+    max_sat = 0.0
+    for h in hexes:
+        r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        hh, ll, ss = colorsys.rgb_to_hls(r, g, b)
+        if ll >= 0.60:
+            light_n += 1
+        max_sat = max(max_sat, ss)
+    if max_sat < 0.15:
+        return "DARK-FOUR-ACT"
+    return "EDIT-SPLIT" if light_n * 5 >= len(hexes) * 2 else "DARK-FOUR-ACT"
+
+
 def build_recipe(tokens, recipe):
-    """recipe 名 → 完整 HTML;未知名 ValueError。"""
-    recipe = (recipe or "DARK-FOUR-ACT").upper().strip()
+    """recipe 名 → 完整 HTML;AUTO(默认)=pick_recipe 按色板气质路由;未知名 ValueError。"""
+    recipe = (recipe or "AUTO").upper().strip()
+    if recipe == "AUTO":
+        recipe = pick_recipe(tokens)
     if recipe == "DARK-FOUR-ACT":
         import scaffold_kit
         return scaffold_kit.build(tokens)
     fn = RECIPES.get(recipe)
     if fn is None:
-        raise ValueError(f"未知配方: {recipe}——可选: DARK-FOUR-ACT, EDIT-SPLIT, BLUEPRINT, SWISS-POSTER, EDITORIAL-MAG")
+        raise ValueError(f"未知配方: {recipe}——可选: AUTO, DARK-FOUR-ACT, EDIT-SPLIT, BLUEPRINT, SWISS-POSTER, EDITORIAL-MAG")
     return fn(tokens)
 
 

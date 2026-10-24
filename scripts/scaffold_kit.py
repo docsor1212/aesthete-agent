@@ -41,9 +41,20 @@ def tune_ink2(ink2, bg, surface, need=4.5):
     return ink2
 
 
+def _sat(h):
+    """HSL 饱和度(0-1)。角色分配用:高饱和=候选强调,低饱和=候选文字。"""
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    mx, mn = max(r, g, b), min(r, g, b)
+    l = (mx + mn) / 2
+    return 0 if mx == mn else (mx - mn) / (2 - mx - mn) if l > 0.5 else (mx - mn) / (mx + mn)
+
+
 def derive(theme_colors, brand, brand_en, use_when):
     """主题色板 → 四幕骨架的全部 token(含暗幕三件套自动派生与调墨)。"""
     hexes = [h.upper().lstrip("#") for h in theme_colors["hexes"]]
+    if len(set(hexes)) < 3:
+        raise ValueError("色板至少 3 个不同颜色(两色板无法分配角色)——补色或先跑 harmony")
+    src = list(hexes)                                   # 原始声明板(明暗策略路由判据用,不被派生污染)
     ranked = sorted(hexes, key=_lum_lin)
     pale = ranked[-1]                                   # 最浅 = 亮幕大底/暗幕主字
     # PALE 必须真的浅:中明度色作大面积背景显脏(用户铁律 2026-10-22)——向白推进至相对亮度≥0.87
@@ -58,7 +69,16 @@ def derive(theme_colors, brand, brand_en, use_when):
     surface = ranked[-2] if len(ranked) > 2 else mids[0]
     # 强调 = 中低明度、中高饱和(简化:中位深度的那块)
     accent = ranked[len(ranked) // 2] if len(mids) >= 2 else mids[0]
-    ink2 = tune_ink2(theme_colors.get("ink2") or mids[0], pale, surface)
+    # ink2 角色:排除霓虹区(高饱和+中亮=刺眼),其余取最暗(深色高饱和不刺眼)
+    mids_by_lum = sorted(mids, key=_lum_lin)           # 深→浅
+    def _neon(h):
+        s = _sat(h)
+        l = sum(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)) / 3
+        return s >= 0.60 and l > 0.45
+    cand = [h for h in mids_by_lum if not _neon(h)]
+    ink2_base = theme_colors.get("ink2") or (cand[0] if cand
+                                             else min(mids, key=_sat))
+    ink2 = tune_ink2(ink2_base, pale, surface)
     mist = ink2                                          # 暗幕次字起点
     if _contrast(mist, night) < 4.5:
         # 向浅爬坡:与 pale 混合逼近
@@ -74,6 +94,7 @@ def derive(theme_colors, brand, brand_en, use_when):
     card = _mix(pale, "FFFFFF", 0.55)
     return {
         "BRAND": brand, "BRAND_EN": brand_en, "USE_WHEN": use_when,
+        "SRC": ",".join(src),
         "NIGHT": night, "PALE": pale, "MIST": mist, "SAGE": sage,
         "SURFACE": surface, "INK": night, "INK2": ink2, "ACCENT": accent,
         "LINE": line, "CARD": card,
@@ -234,7 +255,7 @@ footer.site{background:var(--night);color:var(--mist);border-top:1px solid rgba(
 <!--
   scaffold 0.9(aesthete-agent 表现力骨架) · 主题色板(声明): {t["PALETTE_DECL"]}
   四幕明暗旅程 + 颗粒 + 巨字对微字 + 滚动揭示;渐变禁令已遵守。
-  待替换处均标有"替换"注释;替换后跑 aesthete_report/evidence 验收。
+  待替换处均标有"替换"注释;替换后跑 report/evidence 验收。
 -->
 <style>{css}</style>
 </head>
@@ -313,7 +334,7 @@ footer.site{background:var(--night);color:var(--mist);border-top:1px solid rgba(
 <footer class="site">
   <div class="wrap" style="display:flex;gap:12px 30px;flex-wrap:wrap;justify-content:space-between;width:100%">
     <span>© 2026 {t["BRAND"]} {t["BRAND_EN"]}</span>
-    <span>配色:scaffold 机械验证(PASS · 指纹绑定)——替换内容后重跑 aesthete_report</span>
+    <span>配色:scaffold 机械验证(PASS · 指纹绑定)——替换内容后重跑 report</span>
   </div>
 </footer>
 </main>

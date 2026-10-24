@@ -27,6 +27,46 @@ FONTS = [
 ]
 
 
+def scale12(hexes):
+    """五色 → 12 步语义阶(Radix 式):1 最浅…12 最深,浅暗双模式共用语义。
+    色板色按亮度秩映射到对应档,再向目标亮度微调(与白/黑混合)。"""
+    uniq = []
+    for h in hexes:
+        h = h.upper().lstrip("#")
+        if len(h) == 6 and h not in uniq:
+            uniq.append(h)
+
+    def lum(h):
+        r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    def tint(h, k):
+        r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+        return "".join(f"{round(v + (255 - v) * k):02X}" for v in (r, g, b))
+
+    def shade(h, k):
+        r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+        return "".join(f"{round(v * (1 - k)):02X}" for v in (r, g, b))
+
+    ranked = sorted(uniq, key=lum)                     # 浅→深
+    n = len(ranked)
+    steps = {}
+    for i in range(1, 13):
+        tpos = (i - 1) / 11
+        idx = min(n - 1, round(tpos * (n - 1)))
+        base = ranked[idx]
+        target = 0.97 - (i - 1) * 0.76 / 11
+        h = base
+        for _ in range(8):
+            cur = lum(h)
+            diff = target - cur
+            if abs(diff) < 0.02:
+                break
+            h = tint(h, 0.25) if diff > 0 else shade(h, 0.25)
+        steps[i] = h.upper()
+    return steps
+
+
 def _tune_text(hex_fg, hex_bg, need=4.5):
     """把前景调到达标:按明度关系选向黑压或向白提,逐级混合,返回(达标色, 实测比)。"""
     r = _contrast(hex_fg, hex_bg)
@@ -170,6 +210,21 @@ def emit(hexes, name="", brand="", dark=False, out_base="tokens"):
 
     with open(out_base + ".css", "w", encoding="utf-8", newline="\n") as f:
         f.write(css)
+    # 12 步语义阶(Radix 式):五色全阶映射,浅暗双模式共用语义
+    try:
+        steps12 = scale12([h.lstrip("#").upper() for h in hexes])
+        sem = ["app-bg", "sub-bg", "el-bg", "el-hover", "el-active", "border",
+               "border-strong", "solid", "solid-hover", "text-low", "text-high", "ink-deep"]
+        payload["scale12"] = {sem[i - 1]: steps12.get(i) for i in range(1, 13)}
+        block = "\n/* 12 步语义阶(浅暗双模式共用语义) */\n:root{\n"
+        for i, name in enumerate(sem, 1):
+            block += f"  --step-{i:02d}-{name}: #{steps12.get(i, 'CCCCCC')};\n"
+        block += "}\n"
+        css = css + block
+        with open(out_base + ".css", "w", encoding="utf-8", newline="\n") as f2:
+            f2.write(css)
+    except Exception:
+        payload["scale12"] = {}
     with open(out_base + ".json", "w", encoding="utf-8", newline="\n") as f:
         json.dump(payload, f, ensure_ascii=False, indent=1)
     return payload, (0 if verdict == "PASS" else 1)

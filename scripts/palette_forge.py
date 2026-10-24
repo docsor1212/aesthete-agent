@@ -633,7 +633,7 @@ def cmd_visualize(args):
     --svg 槽位清单重着色(纯黑白保留), --shuffle N 出多排列对比网格。"""
     hexes = [h.upper() for h in palette_list(args.palette)]
     if len(hexes) < 3:
-        print("至少 3 色", file=sys.stderr); sys.exit(1)
+        print("至少 3 色", file=sys.stderr); sys.exit(2)
     n_var = max(1, min(int(getattr(args, "variants", 1) or 1), 6))
     orders = [hexes[i:] + hexes[:i] for i in range(n_var)]
     if n_var >= 2:
@@ -785,7 +785,7 @@ def cmd_report(args):
     退出码=裁决(0=PASS, 1=FAIL)。"""
     hexes = [h.upper() for h in palette_list(args.palette)]
     if len(hexes) < 3:
-        print("至少 3 色", file=sys.stderr); sys.exit(1)
+        print("至少 3 色", file=sys.stderr); sys.exit(2)
     engine = os.path.abspath(__file__)
 
     def _run(*a):
@@ -1272,7 +1272,7 @@ def cmd_theme(args):
     t = next((x for x in themes if x["name"] == args.name or x["name_en"] == args.name), None)
     if not t:
         print(f"主题不存在: {args.name};可用: " + ", ".join(x["name"] for x in themes))
-        sys.exit(1)
+        sys.exit(2)
     if args.format == "json":
         print(json.dumps(t, ensure_ascii=False, indent=1))
         return
@@ -1687,7 +1687,7 @@ def cmd_scene(args):
         f.write(html)
     print(f"scene: {out} (kind={args.kind} name={name})")
     print(f"主题色板(声明): {declared}")
-    print("下一步:作为页面起点填充,或嵌入;替换后 aesthete_report/evidence 验收")
+    print("下一步:作为页面起点填充,或嵌入;替换后 report/evidence 验收")
 
 
 def cmd_scaffold(args):
@@ -1711,13 +1711,17 @@ def cmd_scaffold(args):
             sys.exit(2)
         tokens = scaffold_kit.theme_tokens(rec, args.brand, args.brand_en)
     elif args.palette:
-        tokens = scaffold_kit.derive({"hexes": palette_list(args.palette)},
+        _hexes = palette_list(args.palette)
+        if len(set(_hexes)) < 3:
+            print("至少 3 个不同颜色(两色板无法分配角色)", file=sys.stderr)
+            sys.exit(2)
+        tokens = scaffold_kit.derive({"hexes": _hexes},
                                      args.brand or "山野手作", args.brand_en or "Studio",
                                      args.use_when or "")
     else:
         print("--theme 或 --palette 必给其一", file=sys.stderr)
         sys.exit(2)
-    recipe = (getattr(args, "recipe", None) or "DARK-FOUR-ACT").upper().strip()
+    recipe = (getattr(args, "recipe", None) or "AUTO").upper().strip()
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import layout_recipes
@@ -1730,7 +1734,7 @@ def cmd_scaffold(args):
         f.write(html)
     print(f"scaffold: {out}")
     print(f"主题色板(声明): {tokens['PALETTE_DECL']}")
-    print("下一步:替换『替换』标记的内容 → aesthete_report/evidence 验收")
+    print("下一步:替换『替换』标记的内容 → report/evidence 验收")
 
 
 def cmd_evidence(args):
@@ -1828,7 +1832,7 @@ def cmd_tokens(args):
         print(f"  {k} = {v:.2f}:1")
     if payload["problems"]:
         print("未达标: " + "; ".join(payload["problems"]), file=sys.stderr)
-    print("下一步: tokens.css 供页面直接引用;交付前 aesthete_report/evidence 验收")
+    print("下一步: tokens.css 供页面直接引用;交付前 report/evidence 验收")
     sys.exit(rc)
 
 
@@ -2005,6 +2009,102 @@ def cmd_narrate(args):
             f.write(body)
         print(f"(已写入 {default})")
     sys.exit(0 if verdict == "PASS" else 1)
+
+
+def cmd_exemplar(args):
+    """范例库检索注入(0.16):渲染评审+四闸验证过的配方快照按 kind/register 检索。
+    调研定案:范例代码注入 ≥ token 表 > 可判定禁令;检索零命中显式报错不猜。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import exemplar_kit
+    except ImportError as e:
+        print(f"缺 exemplar_kit: {e}", file=sys.stderr)
+        sys.exit(2)
+    body, err = exemplar_kit.emit(kind=args.kind, register=args.register, list_only=args.list)
+    if err:
+        print(err, file=sys.stderr)
+        sys.exit(2)
+    print(body)
+    sys.exit(0)
+
+
+def cmd_patch(args):
+    """定点修改(0.16):audit findings → 字面 search/replace 对;--apply 备份 .bak 后直修并复检。
+    检查结果不再只是散文——机械类(脏色大底/字号下限/中文负字距/对比对)当场修,
+    不可机械类降级 manual 指引,不猜不改。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import page_audit
+    except ImportError as e:
+        print(f"缺 page_audit: {e}", file=sys.stderr)
+        sys.exit(2)
+    if not os.path.exists(args.page):
+        print(f"文件不存在: {args.page}", file=sys.stderr)
+        sys.exit(2)
+    pal = [h.upper().lstrip("#") for h in palette_list(args.palette)] if args.palette else None
+    with open(args.page, encoding="utf-8", newline="") as f:
+        html = f.read()
+    findings, _ = page_audit.audit_page(html, pal, args.floor)
+    patches = page_audit.patches_for(findings, html)
+    if not args.apply:
+        lit = [p for p in patches if p["search"]]
+        print(f"定点修改清单: 机械可修 {len(lit)} 条 / manual {len(patches) - len(lit)} 条")
+        for p in patches:
+            if p["search"]:
+                print(f"  [{p['sev']}|{p['check']}] {p['search']!r} -> {p['replace']!r}  # {p['note']}")
+            else:
+                print(f"  [{p['sev']}|{p['check']}] manual: {p['note']}")
+        if args.out:
+            with open(args.out, "w", encoding="utf-8", newline="\n") as f:
+                json.dump(patches, f, ensure_ascii=False, indent=1)
+        sys.exit(0 if lit else 2)
+    import shutil
+    bak = args.page + ".bak"
+    if not os.path.exists(bak):
+        shutil.copy2(args.page, bak)                    # 仅首轮备份(原始态=回滚点,CRLF/编码不动)
+    lit = [p for p in patches if p["search"]]
+    applied = 0
+    for p in lit:
+        if p["search"] in html:
+            html = html.replace(p["search"], p["replace"])
+            applied += 1
+    with open(args.page, "w", encoding="utf-8", newline="") as f:
+        f.write(html)
+    findings2, _ = page_audit.audit_page(html, pal, args.floor)
+    n2 = {s: sum(1 for x in findings2 if x["sev"] == s) for s in ("P0", "P1", "P2")}
+    print(f"已应用 {applied}/{len(lit)} 条机械补丁(备份 {bak})")
+    print(f"复检: P0={n2['P0']} P1={n2['P1']} P2={n2['P2']}")
+    for x in findings2:
+        print(f"  [{x['sev']}|{x['check']}] {x['msg']}")
+    ok = n2["P0"] == 0 and n2["P1"] < 2
+    print("裁决:", "PASS" if ok else "FAIL")
+    sys.exit(0 if ok else 1)
+
+
+def cmd_loop(args):
+    """渲染闭环清单(0.16):渲染评审轮编码化为宿主可执行检查单
+    (机械预检/截图三铁律/qc 对账/五镜/patch 定点修/停止条件),命令按实参生成。"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import loop_kit
+    except ImportError as e:
+        print(f"缺 loop_kit: {e}", file=sys.stderr)
+        sys.exit(2)
+    if not os.path.exists(args.page):
+        print(f"文件不存在: {args.page}", file=sys.stderr)
+        sys.exit(2)
+    hexes = [h.upper().lstrip("#") for h in palette_list(args.palette)]
+    if len(hexes) < 2:
+        print("--palette 至少 2 色", file=sys.stderr)
+        sys.exit(2)
+    md = loop_kit.emit(args.page, hexes, floor=args.floor, bg=args.bg, out=args.out)
+    print(md)
+    if not args.out:
+        default = os.path.splitext(args.page)[0] + ".loop.md"
+        with open(default, "w", encoding="utf-8", newline="\n") as f:
+            f.write(md)
+        print(f"(已写入 {default})")
+    sys.exit(0)
 
 
 def cmd_card(args):
@@ -2247,8 +2347,8 @@ def main():
     s = sub.add_parser("scaffold")
     s.add_argument("--theme", help="主题包 name_en/name,如 Deep Pine")
     s.add_argument("--palette", help="逗号分隔 hex(无主题时用)")
-    s.add_argument("--recipe", default="DARK-FOUR-ACT",
-                   help="布局配方: DARK-FOUR-ACT/EDIT-SPLIT/BLUEPRINT/SWISS-POSTER/EDITORIAL-MAG")
+    s.add_argument("--recipe", default="AUTO",
+                   help="布局配方: AUTO(默认,按色板气质路由)/DARK-FOUR-ACT/EDIT-SPLIT/BLUEPRINT/SWISS-POSTER/EDITORIAL-MAG")
     s.add_argument("--brand", default=None, help="品牌名(默认取主题)")
     s.add_argument("--brand-en", dest="brand_en", default=None)
     s.add_argument("--use-when", dest="use_when", default="")
@@ -2318,6 +2418,29 @@ def main():
     s.add_argument("--dark", action="store_true", help="按暗底推导角色")
     s.add_argument("--out", default=None, help="输出 md 路径")
     s.set_defaults(fn=cmd_narrate)
+
+    s = sub.add_parser("exemplar")
+    s.add_argument("--kind", default=None,
+                   help="页面类型: landing/tech-landing/poster/editorial/narrative")
+    s.add_argument("--register", default=None, choices=["light", "dark"], help="明暗语域")
+    s.add_argument("--list", action="store_true", help="只列范例目录")
+    s.set_defaults(fn=cmd_exemplar)
+
+    s = sub.add_parser("patch")
+    s.add_argument("page", help="页面 HTML")
+    s.add_argument("--palette", default=None, help="声明色板(给出即查漂移)")
+    s.add_argument("--floor", type=float, default=12, help="字号下限 px")
+    s.add_argument("--apply", action="store_true", help="备份 .bak 后应用机械补丁并复检")
+    s.add_argument("--out", default=None, help="补丁清单 JSON 输出路径")
+    s.set_defaults(fn=cmd_patch)
+
+    s = sub.add_parser("loop")
+    s.add_argument("page", help="页面 HTML")
+    s.add_argument("--palette", required=True, help="声明色板,逗号分隔 hex")
+    s.add_argument("--floor", type=float, default=12, help="字号下限 px")
+    s.add_argument("--bg", default=None, help="声明大底 hex(qc 对账用)")
+    s.add_argument("--out", default=None, help="检查单输出路径(默认 <page>.loop.md)")
+    s.set_defaults(fn=cmd_loop)
 
     s = sub.add_parser("card")
     s.add_argument("--palette", required=True)

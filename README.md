@@ -100,7 +100,7 @@ Full method (manifesto → register → source → roles → validate → five-l
 
 | Area | Highlights |
 |---|---|
-| Engine (35 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house/extract/directions/scene/scaffold/check-image/evidence/tokens/audit/chartpal/typescale/qc/narrate |
+| Engine (38 subcommands) | match/search/harmony/ramp/mutate/roles/score/contrast/blind/matrix/semantic/slop/themes/theme/export(w3c·context·css·tailwind·prompt)/card/showcase/visualize/report/critique/doctor/selftest/house/extract/directions/scene/scaffold/check-image/evidence/tokens/audit/chartpal/typescale/qc/narrate/exemplar/patch/loop |
 | Evidence library | 119 curated palettes with like tiers, computed style tags, gate flags |
 | Scene visualizer | 10 real front-end scene types × any palette, light and dark, `--variants` for A/B, `--svg` slot-list recoloring |
 | Theme packs | 8 named packs (colors + fonts + voice + use-when), all with provenance |

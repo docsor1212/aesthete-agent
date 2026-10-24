@@ -86,6 +86,7 @@ class TestScaffold(unittest.TestCase):
     def test_scaffold_theme_end_to_end(self):
         out = os.path.join(TMP, "scaffold-test.html")
         r = run([ENGINE, "scaffold", "--theme", "Deep Pine",
+                 "--recipe", "DARK-FOUR-ACT",
                  "--brand", "测试木作", "--out", out])
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertTrue(os.path.exists(out))
