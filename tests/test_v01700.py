@@ -134,7 +134,8 @@ class TestColorDirector(unittest.TestCase):
                                  f"{case.get('page')}: 期望 {expect} 实得 {verdict}")
             if verdict == "PASS":
                 n_pass += 1
-        self.assertEqual(n_pass, 21, f"金标漂移: PASS {n_pass}/29")
+        self.assertEqual(n_pass, len([c for c in cases if c.get("expected") == "PASS"]),
+                         f"金标漂移: PASS {n_pass}/{len(cases)}")
 
 
 if __name__ == "__main__":

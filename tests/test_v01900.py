@@ -35,7 +35,7 @@ class TestDirect(unittest.TestCase):
     def test_manifest_golden(self):
         r = run(["direct", "--manifest", os.path.join(ROOT, "tests", "fixtures_colorlab.json")])
         self.assertEqual(r.returncode, 0)
-        self.assertIn("21/29", r.stdout)
+        self.assertIn("22/31", r.stdout)
 
 
 class TestReportDrama(unittest.TestCase):
@@ -48,9 +48,9 @@ class TestReportDrama(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout)
 
     def test_drama_gate_violation(self):
-        # 线与字档 accent 超占面(10%>4%)→ drama FAIL → report 退出码 1
+        # 线与字档 accent 超占面(22%>15% cap,0.20 渲染实验后)→ drama FAIL → rc=1
         r = run(["report", "--palette", DP,
-                 "--zones", "EFF6E0:0.45,AEC3B0:0.25,598392:0.10,124559:0.10,01161E:0.10"])
+                 "--zones", "124559:0.22,EFF6E0:0.45,AEC3B0:0.18,598392:0.05,01161E:0.10"])
         self.assertIn('"drama"', r.stdout)
         self.assertIn('"pass":false', r.stdout.replace(" ", ""))
 

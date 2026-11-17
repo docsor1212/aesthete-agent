@@ -980,5 +980,65 @@
   "expected": "PASS",
   "bold": false,
   "last_act_loud": null
+ },
+ {
+  "page": "L5-C2-好 低饱 accent 10%(渲染实证 drama-8)",
+  "zones": [
+   [
+    "EFF6E0",
+    0.55
+   ],
+   [
+    "AEC3B0",
+    0.18
+   ],
+   [
+    "124559",
+    0.1
+   ],
+   [
+    "F8FBF1",
+    0.17
+   ]
+  ],
+  "palette": [
+   "01161E",
+   "124559",
+   "598392",
+   "AEC3B0",
+   "EFF6E0"
+  ],
+  "accent_share": 0.1,
+  "expected": "PASS"
+ },
+ {
+  "page": "L5-C3-坏 低饱 accent 22% 成墙",
+  "zones": [
+   [
+    "124559",
+    0.22
+   ],
+   [
+    "EFF6E0",
+    0.45
+   ],
+   [
+    "AEC3B0",
+    0.18
+   ],
+   [
+    "F8FBF1",
+    0.15
+   ]
+  ],
+  "palette": [
+   "01161E",
+   "124559",
+   "598392",
+   "AEC3B0",
+   "EFF6E0"
+  ],
+  "accent_share": 0.22,
+  "expected": "FAIL"
  }
 ]

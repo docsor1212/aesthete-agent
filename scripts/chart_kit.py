@@ -14,7 +14,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from palette_forge import (oklch_from_hex, hex_from_oklch, gamut_fit,  # noqa: E402
+from palette_forge import (oklch_from_hex, hex_from_oklch, gamut_fit, contrast_ratio,  # noqa: E402
                            simulate_cb, parse_hex)
 
 CVK = ("protanopia", "deuteranopia", "tritanopia")
@@ -47,8 +47,34 @@ def pair_dE(h1, h2):
     return min(_dE(x, y) for x in a for y in b)
 
 
-def categorical(hexes, n):
+def _push_off_canvas(h, canvas, avoid=(), target=3.0):
+    """AE8(0.20):把对画布 <target 的系列色沿自身色相推暗/提亮至达标(OKLCH L 阶梯)。
+    avoid 给已定系列:在合格带内选与其区分度最大的落点(防替代色堆在同一明度层)。
+    推不动返回原色——由 canvas 门兜底降级。"""
+    if contrast_ratio(h, canvas) >= target:
+        return h
+    L, C, H = oklch_from_hex(h)
+    cl = oklch_from_hex(canvas)[0]
+    direction = -0.02 if cl >= L else 0.02
+    best, bestscore = None, -1.0
+    for _ in range(30):
+        L += direction
+        if not (0.0 <= L <= 1.0):
+            break
+        if abs(L - oklch_from_hex(h)[0]) > 0.50:
+            break
+        cand = hex_from_oklch(L, gamut_fit(L, C, H), H).upper()
+        if contrast_ratio(cand, canvas) < target:
+            continue
+        sc = min((pair_dE(cand, a) for a in avoid), default=1.0)
+        if sc > bestscore:
+            best, bestscore = cand, sc
+    return best or h
+
+
+def categorical(hexes, n, canvas=None):
     """从候选色选 n 个系列色:贪心最大化最小 CVD 区分度;不够则色相旋转补足。
+    canvas 给出时,派生后对画布 <3.0:1 的系列色沿色相自动提暗/提亮替代(AE8)。
     → (series list, checks dict)。"""
     cand = [h.upper().lstrip("#") for h in hexes]
     cand = [h for h in cand if len(h) == 6]
@@ -76,6 +102,13 @@ def categorical(hexes, n):
         if best is None:
             break
         series.append(best)
+    if canvas:
+        cv = canvas.upper().lstrip("#")
+        fixed = []
+        for h in series:
+            h2 = _push_off_canvas(h, cv, avoid=fixed)
+            fixed.append(h2)
+        series = fixed
     Ls = [oklch_from_hex(h)[0] for h in series]
     checks = {
         "min_pair_dE_cvd": round(min(pair_dE(a, b) for i, a in enumerate(series)
@@ -130,12 +163,44 @@ def diverging(hex_a, hex_b, n):
     return out, checks
 
 
-def emit(kind, series, checks, name="", out_base="chartpal"):
-    """JSON + 色样 HTML。"""
+def canvas_gate(series, canvas="FFFFFF"):
+    """AE8(0.20):系列色 vs 画布对比度维度——"只比色块不比对画布"的结构性缺口。
+    判据:每系列色 vs 画布 ≥3.0:1(WCAG 非文本);<1.5:1 或近画布色(纯白系)→ FAIL,
+    其余 <3.0 → verdict 降 WARN(不低于原档)。返回 (verdict_or_None, checks_add)。
+    None=不影响原 verdict(全部达标)。"""
+    if not canvas:
+        return None, {}
+    canvas = canvas.upper().lstrip("#")
+    crs = [contrast_ratio(h, canvas) for h in series]
+    below3 = sum(1 for r in crs if r < 3.0)
+    add = {"min_vs_canvas_cr": round(min(crs), 2) if crs else 0.0,
+           "below3_count": below3, "canvas": canvas}
+    if any(r < 1.5 for r in crs):
+        worst = series[crs.index(min(crs))]
+        return "FAIL", dict(add, reason=f"系列色 #{worst} 对画布 #{canvas} 仅 {min(crs):.2f}:1(<1.5,近乎隐形)——提暗/提亮后重出")
+    if below3:
+        return "WARN", dict(add, reason=f"{below3}/{len(series)} 个系列色对画布 <3.0:1(最小 {min(crs):.2f})——图表元素可能难辨识")
+    return None, add
+
+
+def emit(kind, series, checks, name="", out_base="chartpal", canvas=None):
+    """JSON + 色样 HTML(canvas=目标画布 hex,给出即跑 色vs画布 门)。"""
     verdict = checks.get("verdict", "WARN")
+    gate_verdict, gate_add = canvas_gate(series, canvas)
+    if gate_add:
+        checks = dict(checks, **gate_add)
+        if gate_verdict == "FAIL":
+            verdict = "FAIL"
+            checks["verdict"] = "FAIL"
+        elif gate_verdict == "WARN" and verdict == "PASS":
+            verdict = "WARN"
+            checks["verdict"] = "WARN"
+        if gate_add.get("reason"):
+            checks["canvas_reason"] = gate_add["reason"]
     payload = {"kind": kind, "name": name, "series": series, "checks": checks, "verdict": verdict}
     payload["fingerprint"] = hashlib.sha256(
-        ("aesthete-chartpal/v1|" + kind + "|" + ",".join(series) + "|" + verdict).encode("utf-8")).hexdigest()
+        ("aesthete-chartpal/v1|" + kind + "|" + ",".join(series) + "|" + (canvas or "") + "|" + verdict)
+        .encode("utf-8")).hexdigest()
     with open(out_base + ".json", "w", encoding="utf-8", newline="\n") as f:
         json.dump(payload, f, ensure_ascii=False, indent=1)
 
@@ -146,9 +211,14 @@ def emit(kind, series, checks, name="", out_base="chartpal"):
         note = "中点" if (kind == "diverging" and i == n // 2) else ("高" if i == 0 else ("低" if i == n - 1 else ""))
         cells.append(
             f'<div style="flex:1;min-width:86px"><div style="background:#{h};height:72px;border-radius:10px;'
-            f'display:flex;align-items:flex-end;justify-content:flex-start;padding:8px">'
+            f'border:1px solid rgba(0,0,0,.28);display:flex;align-items:flex-end;justify-content:flex-start;padding:8px">'
             f'<code style="color:#{ink};font-size:12px;font-weight:700">#{h}</code></div>'
             f'<p style="margin:6px 2px 0;font:600 12px system-ui;color:#444">{note or ("系列 %d" % (i + 1))}</p></div>')
+    canvas_str = (canvas or "FFFFFF").upper().lstrip("#")
+    min_cr = checks.get("min_vs_canvas_cr")
+    warn_note = ""
+    if checks.get("below3_count"):
+        warn_note = f" · {checks['below3_count']} 色未达 3:1" + (f" · {checks['canvas_reason']}" if checks.get("canvas_reason") else "")
     pairs = []
     for i in range(n - 1):
         pairs.append(f"<li>#{series[i]} ↔ #{series[i + 1]}:min ΔE(CVD×3) "
@@ -158,6 +228,7 @@ def emit(kind, series, checks, name="", out_base="chartpal"):
 <h2 style="margin:0 0 4px">chartpal · {name or kind} <span style="font-size:13px;color:#777">裁决 {verdict}</span></h2>
 <p style="color:#666;margin:0 0 18px">一个主角系列给重点,其余为衬托;直接标注数据,少用图例;数字列用 tabular-nums。</p>
 <div style="display:flex;gap:12px;flex-wrap:wrap">{''.join(cells)}</div>
+<p style="font-size:13px;color:#555;margin:0 0 6px">画布门: 系列 vs #{canvas_str} 最小对比 {min_cr}{warn_note}</p>
 <h3 style="font-size:15px;margin:22px 0 8px">相邻区分度(三色盲模拟下界)</h3>
 <ul style="font-size:13.5px;color:#555">{''.join(pairs)}</ul>
 <p style="font-size:12.5px;color:#888">指纹 {payload["fingerprint"][:16]}… · aesthete-agent chartpal(0.10.0)</p>

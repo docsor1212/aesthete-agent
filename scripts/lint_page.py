@@ -28,7 +28,7 @@ except Exception:
 PROFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "profile.json")
 HEX_RE = re.compile(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b")
 RGB_RE = re.compile(r"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)")
-FONT_RE = re.compile(r"font-size:\s*(\d+(?:\.\d+)?)px")
+FONT_RE = re.compile(r"font-size:\s*(\d+(?:\.\d+)?)px|font:\s*(?:(?:italic|oblique)\s+)?(?:bold\s+|bolder\s+|lighter\s+|[1-9]00\s+)?(?:[\d.]+\s*/\s*[\d.]+\s+)?(\d+(?:\.\d+)?)px")
 EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF\u2700-\u27BF\u2600-\u26FF]")
 NEUTRAL = lambda r, g, b: (max(r, g, b) - min(r, g, b)) < 30  # 近中性/纸系洗色不算"私货"
 
@@ -92,11 +92,10 @@ def main():
             findings.append(("P0" if fam == "tailwind_defaults" else "P1",
                              f"黑名单族 {fam} 命中: {', '.join('#'+h for h in hit)}"))
 
-    sizes = [float(m) for m in FONT_RE.findall(html)]
+    sizes = [float(g1 or g2) for g1, g2 in FONT_RE.findall(html)]
     small = sorted(s for s in sizes if s < args.floor)
     if small:
-        findings.append(("P1" if min(small) < args.floor * 0.7 else "P2",
-                         f"字号低于下限 {args.floor}px: {sorted(set(small))}"))
+        findings.append(("P1", f"字号低于下限 {args.floor}px: {sorted(set(small))}(含 font: 简写形态)"))
 
     grads = len(re.findall(r"linear-gradient|radial-gradient|conic-gradient", html))
     if grads > args.max_grad:

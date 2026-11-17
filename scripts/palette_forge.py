@@ -301,6 +301,46 @@ def _export_context(hexes):
     return chr(10).join(ctx)
 
 
+def _viz_weak_voices(bg, surface, ink, ink2, muted_target=4.5, disabled_target=3.05):
+    """弱声部两档(A2 新增): 沿 bg->ink 的 OKLCH 明度梯二分取色, 保 ink 色相。
+    落底背景 land = bg/surface 中更暗的那面(同一弱色铺在更暗的面上比值更小, 按最坏面钉线)。
+      muted    = 正文次级声部(段落/表体/引用/控件标签与 currentColor 描边): 目标 >=4.5:1
+      disabled = 最低声部(禁用态/作废价/坐标轴/脚注)+ 非文字占位图元: 目标 >=3:1(WCAG 1.4.11)
+    disabled 钉线不超过 ink2 实际比值, 以免"最低声部"比 ink2 更黑(梯序倒挂);
+    两档的 3:1 硬底线达不到就直接 raise —— 绝不静默回落。"""
+    land = min((bg, surface), key=lambda h: rel_luminance(h))
+    bL, bC, bH = oklch_from_hex(bg)
+    iL, iC, iH = oklch_from_hex(ink)
+    cL, cC, cH = oklch_from_hex(ink2)
+    C = min(0.045, max(bC, 0.012))
+
+    def ramp(frac):
+        L = bL + (iL - bL) * frac
+        return hex_from_oklch(L, gamut_fit(L, C, iH), iH).upper()
+
+    def pin(target):
+        lo, hi = 0.0, 1.0
+        if contrast_ratio(ramp(hi), land) < target:      # 整条梯都够不到 -> 交给调用方报错
+            return ramp(hi)
+        for _ in range(24):
+            mid = (lo + hi) / 2.0
+            if contrast_ratio(ramp(mid), land) >= target:
+                hi = mid
+            else:
+                lo = mid
+        return ramp(hi)
+
+    r2 = contrast_ratio(ink2, land)
+    muted = pin(min(muted_target, max(3.0, contrast_ratio(ink, land))))
+    disabled = pin(min(disabled_target, max(3.0, r2 - 0.05)))
+    for k, v in (("muted", muted), ("disabled", disabled)):
+        r = contrast_ratio(v, land)
+        if r < 3.0:
+            raise ValueError("assert_weak_voice_floor: 角色 %s=#%s 对落底背景 #%s 只有 %.2f:1"
+                             " (<3:1), 拒绝产出" % (k, v, land, r))
+    return muted, disabled
+
+
 def _viz_roles(hexes, dark=None):
     """角色自动映射: bg/surface/ink/ink2/accent(+danger 若存在红系)。dark 缺省按明度均值自判。"""
     info = sorted(((oklch_from_hex(h)[0], h) for h in hexes), key=lambda t: -t[0])
@@ -355,8 +395,10 @@ def _viz_roles(hexes, dark=None):
             atext = cand
             if contrast_ratio(cand, bg) >= 3.0:
                 break
+    muted, disabled = _viz_weak_voices(bg, surface, ink, ink2)
     return {"bg": bg, "surface": surface, "ink": ink, "ink2": ink2, "accent": accent,
-            "danger": danger, "atext": atext, "dark": dark}
+            "danger": danger, "atext": atext, "dark": dark,
+            "muted": muted, "disabled": disabled}
 
 
 def _viz_text_levels(R):
@@ -842,13 +884,31 @@ def cmd_report(args):
                 best = (r, a, b)
     gates["contrast"] = {"pass": best[0] >= 4.5,
                          "best": format(best[0], ".2f") + ":1 (#" + best[1] + " on #" + best[2] + ")",
-                         "threshold": "4.5:1"}
+                         "threshold": "4.5:1",
+                         "detail": ("判据=板内存在≥4.5:1可用文字对(非全对全查);实测最优对 #"
+                                    + best[1] + " on #" + best[2] + " = " + format(best[0], ".2f") + ":1"
+                                    + ("" if best[0] >= 4.5 else "——板内无可读文字对,换板或调墨"))}
     rc, out = _run("blind", "--palette", ",".join(hexes))
-    gates["color_blind"] = {"pass": rc == 0, "detail": out[-160:]}
+    # AE3: COLLISION RISK 不再 pass=True;纸面豁免=碰撞色为近中性(pale/card 层次设计意图,
+    # 靠边框/阴影区分,色板层判"撞色"属语义错配);有色碰撞如实翻红
+    _cb_pairs = re.findall(r"([0-9A-Fa-f]{6})\s*\(min-separation[^)]*\)\s*<-\s*COLLISION RISK", out)
+
+    def _near_neutral(h):
+        L, C, _ = oklch_from_hex(h.upper().lstrip("#"))
+        return C < 0.10
+    # 纸面豁免无条件适用:碰撞对为近中性(C<0.10)=pale/card 层次设计意图,
+    # 全灰板同理(其假安心由 contrast/slop/score 三门兜住,总裁决不放松)
+    _cb_hard = [h for h in _cb_pairs if not _near_neutral(h)]
+    gates["color_blind"] = {"pass": rc == 0 and not _cb_hard, "detail": out[-160:]}
     rc, out = _run("slop", "--palette", ",".join(hexes))
     gates["ai_slop"] = {"pass": rc == 0, "detail": out[-160:]}
     rc, out = _run("score", "--palette", ",".join(hexes))
-    gates["score"] = {"pass": rc == 0, "detail": out[-160:]}
+    # AE3: score 门不再忽略 detail 里的发现。分级裁决:[P0] 或总分 <15 翻红(P1 提醒+Good 分
+    # 不翻——纸面对层次属设计意图);紫渐变类签名由 ai_slop 门专责,不在此重复计票
+    _m = re.search(r"TOTAL\s+(\d+)/20", out)
+    _total = int(_m.group(1)) if _m else 20
+    _hard = re.search(r"\[P0\]", out) is not None
+    gates["score"] = {"pass": rc == 0 and not _hard and _total >= 15, "detail": out[-160:]}
     if getattr(args, "zones", None):
         # 第五闸(0.19):主色戏剧——主色档位与占面 cap(渲染实证规则,--zones 给页面占比)
         try:
@@ -950,6 +1010,9 @@ def cmd_mutate(args):
 
 
 def cmd_contrast(args):
+    # AE5: 统一清洗入参——带 # 输入时 f"#{fg.upper()}" 曾拼出 ##XXX(复制即失效)
+    args.fg = str(args.fg).strip().lstrip("#")
+    args.bg = str(args.bg).strip().lstrip("#")
     if getattr(args, "method", "wcag") == "apca":
         lc = apca(args.fg, args.bg)
         print(f"APCA Lc={lc} ({apca_verdict(lc)})  #{args.fg.upper()} on #{args.bg.upper()}")
@@ -1271,6 +1334,7 @@ def cmd_house(args):
     if args.name not in prof["loved_palette_ids"]:
         prof["loved_palette_ids"].append(args.name)
         json.dump(prof, open(PROFILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print("提醒: profile.json(用户裁决档案)有变更——若在 git 管理的安装内,记得提交,避免偏好只有工作区一份(AE7)")
     print(f"house 入库: {args.name} [{' '.join(sorted(set(tags)))}] (loved+1, match 自动加权)")
 
 
@@ -1479,19 +1543,29 @@ def cmd_doctor(args):
 
 BRIEF_KEYWORDS = {
     # 词 → 语域。机械映射,不靠临场发挥;新领域=加词条,不是加散文。
-    "medical_teaching": ["教学", "临床", "查房", "医学", "医疗", "指南", "解读", "儿科", "病例", "文献", "患教"],
-    "pediatric_cover": ["封面", "儿童", "母婴"],
+    "medical_teaching": ["教学", "临床", "查房", "医学", "医疗", "指南", "解读", "儿科", "病例", "文献", "患教",
+                         # 0.20.0 英文词条
+                         "teaching", "clinical", "medical", "guideline", "journal club", "grand rounds",
+                         "case report", "slide deck", "journal"],
+    "pediatric_cover": ["封面", "儿童", "母婴",
+                        # 0.20.0 英文词条
+                        "children", "kids", "child", "vaccine", "poster", "cover", "baby", "infant"],
     # 前端语域(0.7.0):中文审美口语词 → 板族。"鲜艳"只指向有品位的鲜活——
     # 无品位的刺眼板带 gate 旗/踩禁词族,排序里 -4 自然沉底,不是这里豁免。
     "frontend_soft": ["素雅", "清新", "柔和", "温柔", "淡雅", "耐看", "干净", "极简", "简洁", "轻盈",
                       "奶油", "莫兰迪", "奶油风", "治愈", "轻盈感", "温柔风",
                       # 0.12.0 扩容
                       "素净", "温润", "细腻", "柔美", "淡色", "舒适", "棉麻", "日式", "侘寂", "奶咖",
-                      "软糯", "松弛"],
+                      "软糯", "松弛",
+                      # 0.20.0 英文词条
+                      "soft", "calm", "pastel", "minimal", "gentle", "clean"],
     "frontend_deep": ["大气", "稳重", "高级", "高级感", "质感", "商务", "沉稳", "典雅", "正式", "深沉",
                       "轻奢", "厚重", "硬朗", "工业风", "办公",
                       # 0.12.0 扩容
-                      "老钱风", "深邃", "暗色调", "墨色", "咖啡", "皮革", "胡桃木", "绅士", "压得住"],
+                      "老钱风", "深邃", "暗色调", "墨色", "咖啡", "皮革", "胡桃木", "绅士", "压得住",
+                      # 0.20.0 英文词条
+                      "dark", "premium", "luxury", "elegant", "serious", "moody",
+                      "杂志", "幻灯片", "俱乐部"],
     "frontend_bold": ["鲜艳", "活力", "年轻", "大胆", "撞色", "吸睛", "潮流", "醒目",
                       "明快", "清爽", "活泼", "元气", "有劲",
                       # 0.12.0 扩容
@@ -1499,7 +1573,10 @@ BRIEF_KEYWORDS = {
     "frontend_tech": ["科技", "科技感", "现代", "未来", "理性", "开发者", "程序员", "数据",
                       "极客", "赛博", "科幻", "智能",
                       # 0.12.0 扩容
-                      "赛博朋克", "像素", "终端", "代码", "太空", "宇宙", "机甲", "霓虹"],
+                      "赛博朋克", "像素", "终端", "代码", "太空", "宇宙", "机甲", "霓虹",
+                      # 0.20.0 英文词条(AE2):SKILL.md 示例即英文 brief,表必须双语
+                      "fintech", "dashboard", "saas", "developer", "terminal", "tech",
+                      "engineering", "tool", "devtool", "api"],
     # 东方语域(0.12.0):国风/传统色审美 → 暖陶/深墨/青绿系板
     "frontend_heritage": ["国风", "国潮", "水墨", "青绿", "敦煌", "宋韵", "禅意", "茶",
                           "古朴", "陶土", "宣纸", "东方", "汉风", "唐风", "古风", "年画",
@@ -1556,7 +1633,19 @@ def cmd_match(args):
     pals = _ranked_for_register(pals, reg, prof)
     if args.no_flags:
         pals = [p for p in pals if not p["flags"]]
+    want_tags = set(REGISTER_TAGS.get(reg, []))
+    loved = prof.get("loved_palette_ids", [])
+    banned = set(prof.get("banned_hex_families", {}).get("tailwind_defaults", []))
+
+    def _score(p):
+        # 与 _ranked_for_register 的排序主键同源(单一事实源):显示什么就按什么排
+        hits = len(want_tags & set(p["computed_styles"]))
+        dark = 1 if ({'dark', 'deep'} & set(p["computed_styles"])) else 0
+        slop = 1 if set(p["hexes"]) & banned else 0
+        return hits + (2 if p["name"] in loved else 0) - dark * pen - slop * 4
+
     print(f"register={reg}  theme_penalty_dark={pen}  candidates={len(pals)}")
+    print("排序: score=语域标签命中+loved-暗底惩罚-禁词族(主键,降序), 次键 tier/likes; 首列即 score")
     try:
         _tp = os.path.join(os.path.dirname(os.path.abspath(LIBRARY)), "themes.json")
         _td = json.load(open(_tp, encoding="utf-8")) if os.path.exists(_tp) else {}
@@ -1568,7 +1657,7 @@ def cmd_match(args):
     for p in pals[: args.limit]:
         stars = "*" * p["tier"] if p["tier"] else "new"
         fl = " !" + "!".join(p["flags"]) if p["flags"] else ""
-        print(f"{stars:4s}{p['likes']:>7,}  {p['name']}  [{' '.join(p['computed_styles'])}]{fl}")
+        print(f"{stars:4s}{_score(p):>4d} {p['likes']:>7,}  {p['name']}  [{' '.join(p['computed_styles'])}]{fl}")
         print(f"           {' '.join(p['hexes'])}")
     print("纪律:取 ≥2 候选走 card/showcase 对比后定;被否决的裁决写回 profile.json(机制,不是记忆)。")
 
@@ -1751,6 +1840,22 @@ def cmd_scene(args):
     print("下一步:作为页面起点填充,或嵌入;替换后 report/evidence 验收")
 
 
+def _safe_out_dir():
+    """AE6: 无 --out 时默认落点。cwd 在 skill 包内(只读安装被污染/写失败)→ ~/.cache/aesthete/。"""
+    cwd = os.getcwd()
+    pkg_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # skill 根(scripts 的父)
+    try:
+        inside = os.path.commonpath([cwd, pkg_root]) == pkg_root
+    except ValueError:
+        inside = False
+    if inside:
+        d = os.path.join(os.path.expanduser("~"), ".cache", "aesthete")
+        os.makedirs(d, exist_ok=True)
+        print(f"输出落点: cwd 在 skill 包内,改写 {d}(避免污染安装包;显式 --out 可指定)", file=sys.stderr)
+        return d
+    return cwd
+
+
 def cmd_scaffold(args):
     """表现力页面骨架(0.9):主题 → 四幕明暗旅程整页(night-hero/晨坊/夜话/夜约),
     颗粒+巨字对微字+不对称网格+滚动揭示,对比度自动调墨;替换标记就绪,替换后跑验收。"""
@@ -1895,7 +2000,7 @@ def cmd_tokens(args):
         sys.exit(2)
     payload, rc = token_sheet.emit(
         hexes, args.name or args.theme or "palette", args.brand or "",
-        dark=bool(args.dark), out_base=args.out or "tokens")
+        dark=bool(args.dark), out_base=args.out or os.path.join(_safe_out_dir(), "tokens"))
     print(f"tokens: {(args.out or 'tokens')}.css + .json — 裁决 {payload['verdict']}")
     for k, v in payload["ratios"].items():
         print(f"  {k} = {v:.2f}:1")
@@ -1952,7 +2057,8 @@ def cmd_chartpal(args):
         if len(hexes) < 2:
             print("categorical 需 ≥2 候选色", file=sys.stderr)
             sys.exit(2)
-        series, checks = chart_kit.categorical(hexes, n)
+        series, checks = chart_kit.categorical(hexes, n,
+                                               canvas=(getattr(args, "canvas", None) or "FFFFFF"))
     elif args.kind == "sequential":
         series, checks = chart_kit.sequential(hexes[0], n, reverse=bool(args.reverse))
     elif args.kind == "diverging":
@@ -1963,8 +2069,10 @@ def cmd_chartpal(args):
     else:
         print(f"未知类型: {args.kind}", file=sys.stderr)
         sys.exit(2)
-    payload = chart_kit.emit(args.kind, series, checks, args.name or "", args.out or "chartpal")
-    print(f"chartpal: {(args.out or 'chartpal')}.json + .html — 裁决 {payload['verdict']}")
+    _cp_out = args.out or os.path.join(_safe_out_dir(), "chartpal")
+    payload = chart_kit.emit(args.kind, series, checks, args.name or "", _cp_out,
+                             canvas=getattr(args, "canvas", None))
+    print(f"chartpal: {_cp_out}.json + .html — 裁决 {payload['verdict']}")
     print("  系列: " + " ".join("#" + h for h in series))
     for k, v in checks.items():
         if k != "verdict":
@@ -1983,7 +2091,8 @@ def cmd_typescale(args):
         print(f"缺 type_kit: {e}", file=sys.stderr)
         sys.exit(2)
     payload = type_kit.emit(args.name or "", base=args.base, ratio=args.ratio,
-                            floor=args.floor, out_base=args.out or "typescale",
+                            floor=args.floor,
+                            out_base=args.out or os.path.join(_safe_out_dir(), "typescale"),
                             fluid=bool(getattr(args, "fluid", False)))
     print(f"typescale: {(args.out or 'typescale')}.css + .html + .json — 裁决 {payload['verdict']}")
     for s in ("3xl", "2xl", "xl", "lg", "base", "sm", "xs"):
@@ -2073,7 +2182,8 @@ def cmd_narrate(args):
                                      out=args.out)
     print(body)
     if not args.out:
-        default = (args.name or args.theme or "palette").strip().replace(" ", "-") + ".narration.md"
+        default = os.path.join(_safe_out_dir(), (args.name or args.theme or "palette")
+                               .strip().replace(" ", "-") + ".narration.md")
         with open(default, "w", encoding="utf-8", newline="\n") as f:
             f.write(body)
         print(f"(已写入 {default})")
@@ -2472,6 +2582,8 @@ def main():
     s.add_argument("--series", type=int, default=6, help="系列数(2-12)")
     s.add_argument("--reverse", action="store_true", help="顺序板浅→深反转")
     s.add_argument("--name", default=None)
+    s.add_argument("--canvas", default="FFFFFF",
+                   help="目标画布 hex(默认 FFFFFF;系列色对画布 <3.0:1 降级,<1.5:1 FAIL)")
     s.add_argument("--out", default=None, help="输出前缀(默认 chartpal)")
     s.set_defaults(fn=cmd_chartpal)
 

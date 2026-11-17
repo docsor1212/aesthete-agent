@@ -67,8 +67,83 @@ KINDS = {
 }
 
 
-def build_scene(kind, hexes, name, dark=False, force=False):
-    """kind + 色板 → (html, declared_palette)。紫守门不过则抛 ValueError。"""
+def css_tokens(hexes, R):
+    """色板 → scene_css.css 的令牌取值表(用户令: 模板不得再写死板外色)。
+    只从声明板取:_viz_roles 已给 bg/surface/ink/ink2/danger;line=板内次浅色(发丝线),
+    ok=板内绿/青域且对底 ≥3:1 的色(板里没有绿系达标色时退 atext —— 那属于"必须扩板",
+    最小方案见 references: 给主题记录补 ok 角色)。"""
+    import palette_forge as pf
+    bg, ink, ink2, surf = R["bg"], R["ink"], R["ink2"], R["surface"]
+    cand = [h for h in dict.fromkeys(hexes) if h not in (bg, ink, surf, R["accent"], R["danger"])]
+    line = min(cand, key=lambda h: -pf.oklch_from_hex(h)[0]) if cand else surf
+    ok = None
+    for h in sorted(cand, key=lambda h: -pf.contrast_ratio(h, bg)):
+        _L, _C, _H = pf.oklch_from_hex(h)
+        if 80 <= _H <= 190 and _C >= 0.04 and pf.contrast_ratio(h, bg) >= 3.0:
+            ok = h
+            break
+    for k in ("muted", "disabled"):
+        if not R.get(k):
+            raise ValueError("assert_weak_roles_present: 色板推导缺角色 %s"
+                             "(_viz_roles 未含 A2 弱声部)——拒绝产出" % k)
+    toks = {"__BG__": bg, "__SURF__": surf, "__INK__": ink, "__INK2__": ink2,
+            "__LINE__": line, "__DANGER__": R["danger"], "__OK__": ok or R["atext"],
+            "__MUTED__": R["muted"], "__DISABLED__": R["disabled"]}
+    assert_weak_voice_floor(pf, R, toks)
+    return toks
+
+
+def assert_weak_voice_floor(pf, R, toks):
+    """弱声部落地闸: muted/disabled 对它可能落的每一面(大底 bg 与卡面 surface)都必须 >=3:1
+    (WCAG 1.4.11 非文字口径)。不达标直接 raise, 不静默放过、不回落硬编码灰。"""
+    for tok, role in (("__MUTED__", "muted"), ("__DISABLED__", "disabled")):
+        for face in ("bg", "surface"):
+            r = pf.contrast_ratio(toks[tok], R[face])
+            if r < 3.0:
+                raise ValueError("assert_weak_voice_floor: %s(#%s) 对 %s(#%s) 只有 %.2f:1"
+                                 " (<3:1), 拒绝产出" % (role, toks[tok], face, R[face], r))
+
+
+def css_raw_tokens(R, shadow=True):
+    """非 hex 令牌(投影)单独一张表 —— 不进声明板、不进 tokens 元信息(它不是颜色)。
+    取值从板内派生,不写死 rgba(0,0,0,):palette_forge 自陈 ink2 = secondary details and
+    shadows,且明令 AVOID pure black shadows。
+      shadow=True  亮底: 用 ink 的 rgb 做半透明投影; 暗底: 大底沿 OKLCH 压暗两档再取 rgb。
+      shadow=False 关闭投影: 取值 none —— 同样把占位符吃掉, 不留 __SH__。
+    """
+    import palette_forge as pf
+    if not shadow:
+        return {"__SH__": "none"}
+    if R.get("dark"):
+        L, C, H = pf.oklch_from_hex(R["bg"])
+        L2 = max(0.02, L - 0.22)
+        base = pf.hex_from_oklch(L2, pf.gamut_fit(L2, C * 0.6, H), H)
+        a = ".45"
+    else:
+        base = R["ink"]
+        a = ".18"
+    rr, gg, bb = (int(base[i:i + 2], 16) for i in (0, 2, 4))
+    depth = "0 24px 60px rgba(%d,%d,%d,%s)" % (rr, gg, bb, a)
+    assert not (rr == 0 and gg == 0 and bb == 0), "投影色不许是纯黑"
+    return {"__SH__": depth}
+
+
+def _fill_css(css, toks, raw=None):
+    """令牌取值: 色令牌补 #, 非 hex 令牌(raw, 如 __SH__)按原样填。
+    未知/未映射令牌一律 raise, 零豁免 —— 旧版把 __SH__ 从残留断言里排除,
+    等于放行 11 个占位符漏进产物。
+    """
+    for k, v in toks.items():
+        css = css.replace(k, "#" + v)
+    for k, v in (raw or {}).items():
+        css = css.replace(k, v)
+    left = sorted(set(re.findall(r"__[A-Z0-9_]+__", css)))
+    if left:
+        raise ValueError("scene_css.css 出现未映射令牌,拒绝产出: " + ", ".join(left))
+    return css
+
+def build_scene(kind, hexes, name, dark=False, force=False, shadow=True):
+    """kind + 色板 → (html, declared_palette)。紫守门不过则抛 ValueError。shadow=False 关闭投影:__SH__ → none,不留占位符。"""
     import _showcase_scenes as ss
     kind = kind.lower().strip()
     if kind not in KINDS:
@@ -81,11 +156,17 @@ def build_scene(kind, hexes, name, dark=False, force=False):
     R = ss.roles(p)
     inner = getattr(ss, KINDS[kind])(R)
     badges = ss.badge(R)
-    css = _load_css()
+    toks = css_tokens(hexes, R)
+    css = _fill_css(_load_css(), toks, css_raw_tokens(R, shadow=shadow))
+    board = sorted(set(hexes) | set(toks.values()))
+    meta = ('<meta name="aesthete-palette" content="%s">'
+            '<meta name="aesthete-tokens" content="%s">' % (
+                ",".join(board),
+                ",".join("%s=%s" % (k.strip("_").lower(), v) for k, v in sorted(toks.items()))))
     html = (
         "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n"
         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
-        f"<title>scene · {kind} · {name}</title>\n<style>\n"
+        f"<title>scene · {kind} · {name}</title>\n" + meta + "<style>\n"
         "body{margin:0;padding:34px 20px;display:flex;justify-content:center;"
         "font-family:system-ui,sans-serif}\n"
         + css +
@@ -94,5 +175,5 @@ def build_scene(kind, hexes, name, dark=False, force=False):
         "justify-content:center;align-items:center;min-height:420px\">\n"
         + inner + "\n" + badges + "\n</div>\n</body>\n</html>\n"
     )
-    declared = ",".join(sorted(hexes))
+    declared = ",".join(sorted(set(hexes) | set(toks.values())))
     return html, declared

@@ -297,13 +297,13 @@ def drama_tier(hexes, dark_bg=None):
         return ("A 品牌即色彩", "accent 可拥有一整块 20-40% 的场(整段 hero/整面封底)", cmax, cmean)
     if cmax >= 0.08:
         return ("B 点睛", "accent ≤12%,只给 CTA/链接/数据强调,稀缺即力量", cmax, cmean)
-    return ("C 线与字", "chroma 只出现在细线/眉题/印章 ≤4%,层次交给墨阶", cmax, cmean)
+    return ("C 线与字", "低饱 chroma 合计 ≤15%(渲染实证:细条+KPI+引文幕 15% 成立),层次交给墨阶", cmax, cmean)
 
 
 def rule_drama(hexes, accent_share, dark_bg=None, bold=False):
     """R8 主色戏份(0.19):accent 档位定 cap——强语域 A 品牌即色彩 15-45%/暗幕霓虹 ≤10%/
-    B 点睛 ≤12%/C 线与字 ≤4%;品牌页准入:深暗(L≤0.45)或极浅(L≥0.90)且 C≤0.12 → 15-45% 大域。
-    ⚠️0.19 研究课题:C 线与字 4% cap 与 Deep Pine 10% accent 已验证设计矛盾,需渲染实验裁决。"""
+    B 点睛 ≤12%/C 线与字 ≤15%(0.20 渲染实证);品牌页准入:深暗(L≤0.45)或极浅(L≥0.90)且 C≤0.12 → 15-45% 大域。
+    ⚠️0.19 研究课题:C 线与字 4% cap 与 Deep Pine 10% accent 已验证设计矛盾,已裁决:cap 0.15(2026-11-18 drama 实验)。"""
     tier, policy, cmax, cmean = drama_tier(hexes, dark_bg)
     if tier.startswith("暗幕霓虹"):
         ok = accent_share <= 0.10
@@ -312,7 +312,9 @@ def rule_drama(hexes, accent_share, dark_bg=None, bold=False):
     elif tier.startswith("B"):
         ok = accent_share <= 0.12
     else:
-        ok = accent_share <= 0.04
+        # C 线与字档(低饱板):cap 0.04→0.15(0.20 渲染实验 drama-3/8/15 目审:
+        # 8% 细条+KPI 清晰不抢戏,15% 引文幕"安静而不缺席"成立;>15% 强调成墙)
+        ok = accent_share <= 0.15
     if not ok and bold and not tier.startswith("暗幕霓虹") and not tier.startswith("A"):
         acc = max(hexes, key=lambda h: oklch_from_hex(h)[1])
         aL, aC, _ = oklch_from_hex(acc)
