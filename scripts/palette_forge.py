@@ -848,8 +848,26 @@ def cmd_direct(args):
             n_pass += res["verdict"] == "PASS"
         print(f"合计: {n_pass}/{len(cases)} PASS")
         sys.exit(0)
+    if args.render:
+        # 0.22 渲染事实审计:render_probe v2 的 zones(实际画出来的颜色×占比)直接进度量,
+        # 不依赖声明板——声明≠实况,审计以渲染像素为准
+        with open(args.render, encoding="utf-8") as f:
+            ev = json.load(f)
+        _zs = [(z["hex"].upper().lstrip("#"), float(z["share"])) for z in ev.get("zones", [])]
+        if len(_zs) < 2:
+            print("渲染证据缺 zones(<2 区)——用新版 render_probe.js 重新采集", file=sys.stderr)
+            sys.exit(2)
+        res = color_director.analyze(args.page or args.render, [tuple(z) for z in _zs], bold=args.bold)
+        print(f"渲染事实审计: {args.render}(zones 来自渲染像素,非声明板)")
+        for f_ in res["findings"]:
+            mark = "PASS" if f_["verdict"] == "PASS" else "FAIL"
+            print(f"  [{mark}] {f_['rule']}: {f_['evidence']}")
+            if f_["verdict"] == "FAIL" and f_.get("fix"):
+                print(f"         ↳ {f_['fix']}")
+        print("裁决:", res["verdict"])
+        sys.exit(0 if res["verdict"] == "PASS" else 1)
     if not args.zones:
-        print("--zones 或 --manifest 必给其一", file=sys.stderr)
+        print("--zones / --manifest / --render 必给其一", file=sys.stderr)
         sys.exit(2)
     zones = color_director._parse_zones(args.zones)
     res = color_director.analyze(args.page or "cli", zones, bold=args.bold)
@@ -2497,6 +2515,8 @@ def main():
     s.add_argument("--manifest", default=None, help="lab_zones.json 批量裁决")
     s.add_argument("--page", default=None, help="页面名(写入报告头)")
     s.add_argument("--bold", action="store_true", help="品牌页(大域准入)")
+    s.add_argument("--render", default=None,
+                   help="render_probe.js 采集的 evidence.json(zones 来自渲染像素,渲染事实审计)")
     s.set_defaults(fn=cmd_direct)
 
     s = sub.add_parser("selftest")

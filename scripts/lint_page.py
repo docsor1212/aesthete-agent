@@ -127,6 +127,17 @@ def main():
         mf = ev.get("minFont", 99)
         if mf < args.floor:
             findings.append(("P2", f"渲染实测最小字号 {mf}px < {args.floor}px(样本: {ev.get('fontSample','')[:20]})"))
+        # 0.22 分区复验:probe v2 zones(顶层区块渲染 bg)的脏色大底,渲染事实级
+        import colorsys as _cs
+        for z in ev.get("zones", []):
+            zh_ = str(z.get("hex", "")).upper()
+            if len(zh_) != 6 or z.get("share", 0) < 0.12:
+                continue
+            rr, gg, bb = (int(zh_[i:i + 2], 16) / 255 for i in (0, 2, 4))
+            hh, ll, ss = _cs.rgb_to_hls(rr, gg, bb)
+            if ss >= 0.25 and 0.30 < ll < 0.85:
+                findings.append(("P2", "渲染事实:区块大底 #%s 占 %.0f%% 命中中饱和中明带(显脏)"
+                                 % (zh_, z["share"] * 100)))
         worst = [p for p in ev.get("worstPairs", []) if p["ratio"] < 3.0]
         if worst:
             findings.append(("P1", "实测对比对不足 3:1: " +
