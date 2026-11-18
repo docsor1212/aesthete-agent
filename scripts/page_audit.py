@@ -349,6 +349,22 @@ def audit_page(html, declared_palette=None, floor=12.0):
         findings.append({"sev": "P3", "check": "fake_bold",
                          "msg": "font-weight 800/900 但页面无 @font-face 真字重——合成加粗发糊",
                          "fix": "接字体资产管线(scaffold --fonts preset/auto)或钳到 700(宁细勿假粗)"})
+    # 5f 动效剂量(0.21,渲染实证 _motionlab):hover 放大/旋转=邻居位移;transition 迟钝
+    for m in re.finditer(r":hover\s*\{[^}]*\}", css_scope):
+        blk = m.group(0)
+        if re.search(r"transform\s*:[^;}]*(scale|rotate)", blk):
+            findings.append({"sev": "P2", "check": "motion_scale_hover",
+                             "msg": "hover 使用 scale/rotate——放大/旋转挤动邻居元素",
+                             "fix": "hover 反馈=translateY ≤4px+阴影,150-220ms(M2);缩放语义请换尺寸属性"})
+            break
+    # 悬停应答迟钝:只查 :hover 块内的 transition(M1 进入编排 0.7s 合法,M2 才是 150-220ms)
+    hovers_lag = sorted({v for m in re.finditer(r":hover\s*\{[^}]*\}", css_scope)
+                         for v in re.findall(r"(\d+(?:\.\d+)?)s(?![\d])", m.group(0))
+                         if float(v) >= 0.5})
+    if hovers_lag:
+        findings.append({"sev": "P2", "check": "motion_lag",
+                         "msg": "hover 反馈时长 ≥0.5s: %s——应答迟钝(悬停 150-220ms)" % hovers_lag,
+                         "fix": "M2 悬停 150-220ms;进入编排 0.6-0.9s 属合法(错峰 ≤120ms)"})
     radii = [float(x) for x in re.findall(r"border-radius:\s*(\d+(?:\.\d+)?)px", html)]
     if len([r for r in radii if r >= 28]) > 3:
         findings.append({"sev": "P2", "check": "radius_inflation",

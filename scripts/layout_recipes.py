@@ -115,7 +115,21 @@ figcaption{{font:400 12px/1.6 var(--mono);letter-spacing:.05em;color:var(--ink2)
 @supports (initial-letter:3){{.dropcap>p:first-of-type::first-letter{{initial-letter:3 2;
   font:700 1em var(--serif);color:var(--accent-ink,var(--accent));margin-right:10px}}}}
 @media (max-width:900px){{.grid>*{{grid-column:1/-1!important}}section{{padding:64px 0}}.wrap{{padding:0 24px}}}}
+/* ── 动效底座(0.21,M1/M2,渲染实证 _motionlab):终态=无动效版 ──
+.reveal{{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}}
+.reveal.in{{opacity:1;transform:none}}
+.reveal.d1{{transition-delay:.09s}}.reveal.d2{{transition-delay:.18s}}
+.btn{{transition:transform .18s ease,box-shadow .18s ease}}
+.btn:hover{{transform:translateY(-2px);box-shadow:0 10px 26px rgba(17,22,30,.14)}}
+@media (prefers-reduced-motion:reduce){{.reveal,.btn,.lift{{opacity:1;transform:none;transition:none}}.reveal:hover{{transform:none}}}}
 """
+
+
+def _io_script():
+    """0.21 动效底座脚本:IntersectionObserver 加 .in;无 JS 时内容可见(CSS 基础态=完整)。"""
+    return ('<script>const __io=new IntersectionObserver((es)=>{es.forEach((e)=>{'
+            'if(e.isIntersecting){e.target.classList.add("in");__io.unobserve(e.target)}})},'
+            '{threshold:.12});document.querySelectorAll(".reveal").forEach((el)=>__io.observe(el));</script>')
 
 
 def _nav(t, dark=False):
@@ -208,8 +222,8 @@ body{background:#FFFFFF}
 <div class="wrap"><section class="hero" style="position:relative">
   <span class="cross" style="right:0;top:-6px"></span>
   <div><p class="kicker">{t["BRAND_EN"]} · 一句话定位(替换)</p>
-    <h1>标题两行内，<br>说完一件事。</h1>
-    <p class="lede">两行以内的价值陈述,给一个具体的、可验证的承诺。(替换)</p>
+    <h1 class="reveal">标题两行内，<br>说完一件事。</h1>
+    <p class="lede reveal d1">两行以内的价值陈述,给一个具体的、可验证的承诺。(替换)</p>
     <div style="display:flex;gap:14px;margin-bottom:8px">
       <a class="btn" style="background:var(--night);color:#fff" href="#cta">预约试吃</a>
       <a class="btn ghost" href="#s1">看方法</a></div>
@@ -217,7 +231,7 @@ body{background:#FFFFFF}
       <div><div class="n">—</div><div class="l">指标一(替换)</div></div>
       <div><div class="n">—</div><div class="l">指标二(替换)</div></div>
       <div><div class="n">—</div><div class="l">指标三(替换)</div></div></div></div>
-  <aside class="menu-card">
+  <aside class="menu-card reveal d2">
     <h3>本周出品(替换)</h3>
     <p class="season-note">档期说明(替换)</p>
     <div class="menu-item"><div><span class="mi-name">品名一(替换)</span><span class="tag">本季</span>
@@ -254,7 +268,7 @@ body{background:#FFFFFF}
 <footer><div class="wrap" style="padding-top:26px;padding-bottom:40px;font-size:13px;color:var(--ink2);
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
   <span>© 2026 {t["BRAND"]}</span><span>配色与布局:aesthete-agent 配方 EDIT-SPLIT(四闸 PASS · 本页实测)</span></div></footer>
-</body></html>"""
+{_io_script()}</body></html>"""
     return html
 
 
@@ -329,8 +343,8 @@ summary{{cursor:pointer;font-weight:700;font-size:15px}}
   <span class="cross" style="left:0;top:20px"></span>
   <span class="cross" style="right:0;bottom:20px"></span>
   <p class="kicker" style="justify-content:center;color:var(--sage)">{t["BRAND_EN"]} · ENGINEERING(替换)</p>
-  <h1>为严肃场景<br>造的工具。(替换)</h1>
-  <p class="sub">一句可验证的价值陈述:做什么、给谁、凭什么信。(替换)</p>
+  <h1 class="reveal">为严肃场景<br>造的工具。(替换)</h1>
+  <p class="sub reveal d1">一句可验证的价值陈述:做什么、给谁、凭什么信。(替换)</p>
   <a class="btn" style="background:var(--pale);color:var(--night)" href="#cta">开始使用</a>
   <a class="btn ghost" style="color:var(--pale);border-color:var(--mist);margin-left:12px" href="#s1">读文档</a>
 </section>
@@ -353,7 +367,7 @@ summary{{cursor:pointer;font-weight:700;font-size:15px}}
 </div></div>
 <footer><div class="wrap" style="padding-bottom:36px;font-size:12.5px;color:var(--mist);display:flex;justify-content:space-between">
   <span>© 2026 {t["BRAND"]}</span><span>aesthete-agent 配方 BLUEPRINT</span></div></footer>
-</body></html>"""
+{_io_script()}</body></html>"""
     return html
 
 
@@ -390,8 +404,8 @@ body{letter-spacing:0.01em}
   <span class="cross" style="left:0;bottom:0"></span>
   <span class="side-label" style="right:-34px;top:20%">MANIFESTO — {t["BRAND_EN"]}</span>
   <p class="kicker">MANIFESTO(替换)</p>
-  <h1 class="giant">一句话主张，<br>顶天立地。</h1>
-  <p class="giant-cap" style="max-width:92%;margin-top:10px;font-size:15px;color:var(--ink2)">副题:两行内,给可验证的承诺。巨字占宽按内容自然生长。(替换)</p>
+  <h1 class="giant reveal">一句话主张，<br>顶天立地。</h1>
+  <p class="giant-cap reveal d1" style="max-width:92%;margin-top:10px;font-size:15px;color:var(--ink2)">副题:两行内,给可验证的承诺。巨字占宽按内容自然生长。(替换)</p>
   <a class="btn cta" href="#cta">主行动(替换)</a></div>
 <hr class="rule">
 <div class="wrap"><section class="sec3x9">
@@ -415,7 +429,7 @@ body{letter-spacing:0.01em}
 <footer><div class="wrap" style="padding-bottom:40px"><hr class="rule">
   <div style="display:flex;justify-content:space-between;padding-top:18px;font-size:12.5px;color:var(--ink2)">
   <span>© 2026 {t["BRAND"]}</span><span>aesthete-agent 配方 SWISS-POSTER</span></div></footer>
-</body></html>"""
+{_io_script()}</body></html>"""
     return html
 
 
@@ -448,8 +462,8 @@ def build_editorial_mag(t):
   <span class="meta mono">ISSUE 01 — {t["BRAND_EN"]} — 三代手作</span>
   <div class="art">{_rings_svg(t, 420, 3)}</div>
   <div class="cap">
-    <h1 style="font:900 clamp(34px,5vw,64px)/1.15 var(--serif);color:var(--pale);max-width:20ch">开篇大标,像杂志封面一样说话。(替换)</h1>
-    <p style="margin-top:14px;font-size:14.5px;max-width:44ch">副题一行:本期给读者什么。(替换)</p></div></div>
+    <h1 class="reveal" style="font:900 clamp(34px,5vw,64px)/1.15 var(--serif);color:var(--pale);max-width:20ch">开篇大标,像杂志封面一样说话。(替换)</h1>
+    <p class="reveal d1" style="margin-top:14px;font-size:14.5px;max-width:44ch">副题一行:本期给读者什么。(替换)</p></div></div>
 <div class="narrow dropcap" style="position:relative">
   <div class="bg-motif" style="right:-80px;top:-40px">{_rings_svg(t, 280, 2)}</div>
   <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);
@@ -487,7 +501,7 @@ def build_editorial_mag(t):
   <a class="btn" style="background:var(--pale);color:var(--night)" href="#">主行动(替换)</a></div></section>
 <footer><div class="wrap" style="padding:22px 0 36px;font-size:12.5px;color:var(--ink2);display:flex;justify-content:space-between">
   <span>© 2026 {t["BRAND"]}</span><span>aesthete-agent 配方 EDITORIAL-MAG</span></div></footer>
-</body></html>"""
+{_io_script()}</body></html>"""
     return html
 
 
