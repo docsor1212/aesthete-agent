@@ -48,16 +48,14 @@ def _rings_svg(t, size, stroke_w=2, dark=False):
 
 
 def _placeholder(t, label, ratio="4/5", dark=False, big=False):
-    """母题占位块(0.25 重造):底=反差面,加密年轮母题,左上"视觉位"+左下语义标签落角——
-    占位读作设计好的图版,不是渲染空洞。所有图片位统一走它。"""
+    """图版占位(0.25 二刀):底=反差面,加密年轮母题放大撑满版心,左下语义标签落角。
+    不再自认占位(无"视觉位"角标)——读作设计好的编辑部图版;替换指引走 HTML 注释层。"""
     bg = "var(--night)" if dark else "var(--surface)"
     ink = "var(--mist)" if dark else "var(--ink2)"
-    ring = _rings_svg(t, 150 if big else 92, 3 if big else 2)
+    ring = _rings_svg(t, 230 if big else 140, 3 if big else 2)
     return (f"<div style='aspect-ratio:{ratio};background:{bg};border-radius:14px;"
             f"position:relative;display:flex;align-items:center;justify-content:center'>"
             f"{ring}"
-            f"<span class='mono' style='position:absolute;left:14px;top:12px;color:{ink};"
-            f"opacity:.75'>视觉位</span>"
             f"<span class='mono' style='position:absolute;left:14px;bottom:12px;color:{ink}'>{label}</span></div>")
 
 
@@ -152,7 +150,7 @@ def _nav(t, dark=False):
             f'<a style="color:var(--ink2)" href="#cta">联系</a></nav></div></header>')
 
 
-def _card(t, no, title, meta):
+def _card(t, no, title, meta, price="¥ —", lead="周期 — 天"):
     return (f'<article class="lift" style="background:var(--card);border-radius:14px;padding:26px 26px 20px;'
             f'position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:190px">'
             f'<span style="position:absolute;right:12px;top:0;font:900 84px var(--serif);color:var(--surface)">0{no}</span>'
@@ -160,8 +158,8 @@ def _card(t, no, title, meta):
             f'<p style="font-size:13.5px;color:var(--ink2);position:relative;margin-top:6px">{meta}</p>'
             f'<div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--line);'
             f'display:flex;justify-content:space-between;align-items:baseline;position:relative">'
-            f'<span style="font:800 17px var(--serif)">¥ —</span>'
-            f'<span style="font-size:12.5px;color:var(--ink2)">周期 — 天</span></div></article>')
+            f'<span style="font:800 17px var(--serif)">{price}</span>'
+            f'<span style="font-size:12.5px;color:var(--ink2)">{lead}</span></div></article>')
 
 
 # ---------------------------------------------------------------- R1 EDIT-SPLIT
@@ -230,8 +228,8 @@ body{background:#FFFFFF}
 <div class="wrap"><section class="hero" style="position:relative">
   <span class="cross" style="right:0;top:-6px"></span>
   <div><p class="kicker">{t["BRAND_EN"]} · 深松木作 · 三代手作</p>
-    <h1 class="reveal">标题两行内，<br>说完一件事。</h1>
-    <p class="lede reveal d1">两行以内的价值陈述:一个具体、可验证的承诺。</p>
+    <h1 class="reveal">一块好木板，<br>要经得起十年。</h1>
+    <p class="lede reveal d1">老料整板,榫卯无钉——<b>批次与木料来源可查证</b>。</p>
     <div style="display:flex;gap:14px;margin-bottom:8px">
       <a class="btn" style="background:var(--night);color:#fff" href="#cta">预约工坊</a>
       <a class="btn ghost" href="#s1">看方法</a></div>
@@ -260,9 +258,9 @@ body{background:#FFFFFF}
     <div><span class="no">01</span><p>每周小批量,售完即止</p></div>
     <div><span class="no">02</span><p>配料表公开,可查证</p></div></div></div></section>
 <section class="sub"><div class="features">
-  {_card(t, 1, "砧板系列", "当季木料 · 手工开槽")}
-  {_card(t, 2, "婚礼定制", "刻字 · 礼盒包装")}
-  {_card(t, 3, "茶盘礼盒", "六件 · 当日发货")}</div></section>
+  {_card(t, 1, "砧板系列", "当季木料 · 手工开槽", "¥ 128 起", "周期 14 天")}
+  {_card(t, 2, "婚礼定制", "刻字 · 礼盒包装", "¥ 520 起", "周期 21 天")}
+  {_card(t, 3, "茶盘礼盒", "六件 · 当日发货", "¥ 388 起", "周期 7 天")}</div></section>
 <section class="sub"><div class="grid"><div class="quoteband"><div class="quote">
   <p>「那只砧板用了两年,刀痕越深越好看。」</p>
   <footer style="margin-top:14px;font-size:13px;color:var(--ink2)">—— 老客回访 · 2025</footer>
@@ -358,7 +356,7 @@ summary{{cursor:pointer;font-weight:700;font-size:15px}}
 </section>
 <section class="sub" id="s1"><div class="bento">{''.join(bento)}</div></section>
 <section class="sub"><div class="center8 code">
-&lt;config&gt;<br>&nbsp;&nbsp;<b>engine</b>="aesthete" <span class="cm">// 四道机械检查,不过不交付</span><br>
+&lt;config&gt;<br>&nbsp;&nbsp;<b>engine</b>="outbound" <span class="cm">// 四道机械检查,不过不交付</span><br>
 &nbsp;&nbsp;<b>gates</b>=["contrast","colorblind","slop","score"]<br>&lt;/config&gt;</div></section>
 <section class="sub" id="price"><div class="lightzone">
   <p class="kicker">定价</p>
@@ -412,7 +410,7 @@ body{letter-spacing:0.01em}
   <span class="cross" style="left:0;bottom:0"></span>
   <span class="side-label" style="right:-34px;top:20%">MANIFESTO — {t["BRAND_EN"]}</span>
   <p class="kicker">MANIFESTO · 本季主张</p>
-  <h1 class="giant reveal">一句话主张，<br>顶天立地。</h1>
+  <h1 class="giant reveal">不卖隔夜甜，<br>售完就收炉。</h1>
   <p class="giant-cap reveal d1" style="max-width:92%;margin-top:10px;font-size:15px;color:var(--ink2)">每周小批,售完即止——招牌卷与司康,周四 16:00 出炉。</p>
   <a class="btn cta" href="#cta">预订本季</a></div>
 <hr class="rule">
@@ -423,7 +421,7 @@ body{letter-spacing:0.01em}
 </section><hr class="hairline">
 <section class="sec9x3">
   <div><h2>甜度按季走</h2><p style="color:var(--ink2);max-width:60ch">春天莓果,入秋坚果;司康配当季果酱,甜度比连锁低两档。</p>
-  <p style="color:var(--ink2);max-width:60ch;margin-top:12px">出炉时刻与余量每晚 21:00 更新,数字列右对齐。</p></div>
+  <p style="color:var(--ink2);max-width:60ch;margin-top:12px">出炉时刻与余量,每晚 21:00 在门店小黑板更新。</p></div>
   <div><span class="no">02</span><span class="ghost-num" style="display:block">02</span></div>
 </section><hr class="hairline">
 <section class="bigquote"><p>「甜品上桌的那十分钟,是一天里最贵的一口空气。」</p>
@@ -479,7 +477,7 @@ def build_editorial_mag(t):
     <span class="mono">VOL.01 — 器物特辑</span><span class="mono">{t["BRAND_EN"]}</span></div>
   <p class="kicker" style="position:relative">导语</p>
   <h2 style="position:relative">窄文节:一行一次呼吸的宽度。</h2>
-  <p style="color:var(--ink2)">导语两行,说清本期给读者什么;图像主导的页面里,文字节是呼吸点——一节只做一件事。</p>
+  <p style="color:var(--ink2)">本期从一只碗开始:三位匠人,两窑釉色,一段与泥土相处的时间。</p>
 </div>
 <div class="wrap"><section style="padding-top:0"><div class="offset">
   <div style="background:var(--pale);border-radius:14px;padding:36px 32px">
@@ -523,35 +521,77 @@ RECIPES = {
 }
 
 
-def pick_recipe(tokens):
-    """明暗策略路由(0.16,用户铁律 2026-10-21/22):明暗由色板气质决定——
-    浅优色板浅底优先(EDIT-SPLIT),深色即品牌色的板走暗幕叙事(DARK-FOUR-ACT);
-    近中性灰阶(饱和<0.15)按墨色戏剧处理走暗幕。
-    判据用原始声明板(tokens["SRC"],非派生 PALETTE_DECL——card 恒浅/line 恒深会让派生集系统性偏向浅底):
-    HSL 明度≥0.60 占比≥2/5 视为浅优(Deep Pine 浅色占 2/5 先例,用户 v59 裁决)。"""
+PAGE_SIGNALS = (
+    # 0.26 页型信号词表:brief/use_when 文本命中即定配方(命中多者优先,同分按表序)
+    ("DARK-FOUR-ACT", ("工作室", "品牌叙事", "匠人", "手作", "作品集", "narrative", "studio")),
+    ("BLUEPRINT", ("工具", "工程", "开发者", "文档", "API", "SDK", "定价", "技术", "tech")),
+    ("SWISS-POSTER", ("海报", "展览", "宣言", "活动", "发布", "开幕", "poster", "event")),
+    ("EDITORIAL-MAG", ("杂志", "期刊", "月刊", "画册", "特辑", "编辑", "magazine", "editorial")),
+    ("EDIT-SPLIT", ("门店", "菜单", "出品", "预约", "到店", "landing", "新品")),
+)
+DARK_FORCING = ("DARK-FOUR-ACT", "BLUEPRINT")
+
+
+def pick_recipe(tokens, brief=""):
+    """0.26 两级路由(明暗铁律不动,2026-10-21/22 用户令):
+    ①页型信号:brief/use_when 文本命中 PAGE_SIGNALS 词表 → 定配方(命中数多者优先,同分按表序);
+      但信号指向深色强制配方(BLUEPRINT/DARK-FOUR-ACT)而色板为浅优时,降级到 EDIT-SPLIT——
+      明暗仍由色板气质决定,信号只定版式家族;
+    ②无信号:按色板气质定明暗(0.16 判据不动):浅优(明度≥0.60 占比≥2/5)→EDIT-SPLIT,
+      深色即品牌色→DARK-FOUR-ACT;近中性灰阶(饱和<0.15)按墨色戏剧走暗幕。
+    判据用原始声明板(tokens["SRC"],非派生 PALETTE_DECL——card 恒浅/line 恒深会让派生集系统性偏向浅底)。
+    返回 (recipe, rationale):理由必须进 stdout,AUTO 不做黑盒。"""
     import colorsys
+    brief = " ".join(filter(None, [brief, tokens.get("USE_WHEN", "")]))
     src = tokens.get("SRC") or tokens["PALETTE_DECL"]
     hexes = [h for h in src.split(",") if h]
+    light = False
+    if hexes:
+        light_n, max_sat = 0, 0.0
+        for h in hexes:
+            r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+            hh, ll, ss = colorsys.rgb_to_hls(r, g, b)
+            if ll >= 0.60:
+                light_n += 1
+            max_sat = max(max_sat, ss)
+        light = max_sat >= 0.15 and light_n * 5 >= len(hexes) * 2
+    temper = "浅优" if light else "深色/墨色"
+
+    # ① 页型信号
+    hits = []
+    low = brief.lower()
+    for name, words in PAGE_SIGNALS:
+        n = sum(1 for w in words if w in brief or (w.isascii() and w in low))
+        if n:
+            hits.append((n, PAGE_SIGNALS.index((name, words)), name))
+    if hits:
+        hits.sort(reverse=True)
+        recipe = hits[0][2]
+        if light and recipe in DARK_FORCING:
+            why = ("页型信号「%s」指向 %s,但色板气质=浅优(明暗铁律:浅优不进深色强制配方)"
+                   " → 降级 EDIT-SPLIT(浅底编辑部骨架)" % (
+                       "、".join(w for w in PAGE_SIGNALS[hits[0][1]][1] if w in brief or (w.isascii() and w in low))[:30],
+                       recipe))
+            return "EDIT-SPLIT", why
+        why = "页型信号「%s」命中 %s(命中 %d 词);色板气质=%s,明暗随配方定" % (
+            "、".join(w for w in PAGE_SIGNALS[hits[0][1]][1] if w in brief or (w.isascii() and w in low))[:30],
+            recipe, hits[0][0], temper)
+        return recipe, why
+    # ② 色板气质兜底(0.16 判据原样)
     if not hexes:
-        return "DARK-FOUR-ACT"
-    light_n = 0
-    max_sat = 0.0
-    for h in hexes:
-        r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
-        hh, ll, ss = colorsys.rgb_to_hls(r, g, b)
-        if ll >= 0.60:
-            light_n += 1
-        max_sat = max(max_sat, ss)
+        return "DARK-FOUR-ACT", "无声明板 → 默认暗幕叙事"
     if max_sat < 0.15:
-        return "DARK-FOUR-ACT"
-    return "EDIT-SPLIT" if light_n * 5 >= len(hexes) * 2 else "DARK-FOUR-ACT"
+        return "DARK-FOUR-ACT", "无页型信号;色板近中性(饱和<0.15)按墨色戏剧 → 暗幕叙事"
+    if light:
+        return "EDIT-SPLIT", "无页型信号;色板浅优(明度≥0.60 占比≥2/5) → 浅底编辑部骨架"
+    return "DARK-FOUR-ACT", "无页型信号;深色即品牌色 → 暗幕叙事"
 
 
 def build_recipe(tokens, recipe):
-    """recipe 名 → 完整 HTML;AUTO(默认)=pick_recipe 按色板气质路由;未知名 ValueError。"""
+    """recipe 名 → 完整 HTML;AUTO(默认)=pick_recipe 两级路由(页型信号×色板气质);未知名 ValueError。"""
     recipe = (recipe or "AUTO").upper().strip()
     if recipe == "AUTO":
-        recipe = pick_recipe(tokens)
+        recipe, _why = pick_recipe(tokens, tokens.get("USE_WHEN", ""))
     if recipe == "DARK-FOUR-ACT":
         import scaffold_kit
         return type_tokens.fill(scaffold_kit.build(tokens))

@@ -290,8 +290,9 @@ def main():
     try:
         with open(PROFILE, encoding="utf-8") as f:
             banned = json.load(f).get("banned_hex_families", {})
-    except Exception:
-        pass
+    except Exception as e:
+        # 0.26 闸门诚实:黑名单闸数据不可读绝不静默 —— 跳过即记 P1(默认严=红)
+        findings.append(("P1", f"黑名单族闸跳过:profile.json 不可读({e}) —— tailwind 默认/紫域黑名单本轮未测,修复后重跑"))
     for fam, hexes in banned.items():
         hit = sorted(set(h.upper() for h in hexes) & used)
         if hit:
@@ -323,8 +324,9 @@ def main():
         try:
             with open(PROFILE, encoding="utf-8") as f:
                 prof = json.load(f)
-        except Exception:
-            pass
+        except Exception as e:
+            # 0.26 闸门诚实:档案(主题/剂量阈值)不可读绝不静默
+            findings.append(("P1", f"档案闸跳过:profile.json 不可读({e}) —— 主题对账与剂量阈值未核"))
         dreg = prof.get("registers", {}).get(prof.get("default_register", ""), {})
         want, acc_max = dreg.get("theme"), dreg.get("accent_max_area", 0.10)
         if want and ev.get("theme") != want:

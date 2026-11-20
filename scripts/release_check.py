@@ -90,6 +90,12 @@ def main():
                     missing.append(f"{f} 缺 {c}")
         if missing:
             fails.append("C4: " + "; ".join(missing[:8]))
+        # 文档即代码(0.26):docs/COMMANDS.md 必须与 CLI 面一致(重跑 docgen --check)
+        r = subprocess.run([sys.executable, os.path.join(HERE, "docgen.py"), "--check"],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
+        if r.returncode != 0:
+            msg = (r.stderr or r.stdout or "").strip().splitlines()
+            fails.append("C4: COMMANDS.md 与 CLI 面不一致 —— " + (msg[0] if msg else "docgen --check rc=%d" % r.returncode))
         # 幻影命令名:引擎字符串里 "aesthete_xxx"/"palette_xxx" 须为真实 MCP 工具名或子命令
         phantom = []
         for m in re.finditer(r'"(aesthete_[a-z_]+)"', src):

@@ -1909,6 +1909,10 @@ def cmd_scaffold(args):
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import layout_recipes
+        if recipe == "AUTO":
+            # 0.27:AUTO 不做黑盒 —— 路由在调用点解析,理由随 stdout 交付
+            recipe, why = layout_recipes.pick_recipe(tokens, getattr(args, "use_when", "") or "")
+            print(f"AUTO 路由: {recipe} —— {why}")
         html = layout_recipes.build_recipe(tokens, recipe)
     except ValueError as e:
         print(str(e), file=sys.stderr)
@@ -1926,7 +1930,7 @@ def cmd_scaffold(args):
         f.write(html)
     print(f"scaffold: {out}")
     print(f"主题色板(声明): {tokens['PALETTE_DECL']}")
-    print("下一步:替换『替换』标记的内容 → report/evidence 验收")
+    print("下一步:按『替换』注释填真实内容(可见文案已是成品语料,勿回填占位指令)→ report/evidence 验收")
 
 
 def cmd_evidence(args):
@@ -1950,11 +1954,16 @@ def cmd_evidence(args):
         ev["report"] = {"error": (_out or rep.stderr)[-400:]}
     lint_cmd = [sys.executable, os.path.join(here, "lint_page.py"), page, "--palette", ",".join(hexes)]
     if args.render:
-        lint_cmd += ["--render", args.render]
+        # 0.26 闸门诚实:--render 证据不可得绝不静默(旧版吞异常 => 卷宗在"无渲染证据"下仍可 PASS)
+        if not os.path.exists(args.render):
+            print(f"[P1] evidence --render 文件不存在: {args.render} —— 渲染证据闸未测,先跑 render_probe.js 采集", file=sys.stderr)
+            sys.exit(2)
         try:
             ev["render"] = json.load(open(args.render, encoding="utf-8"))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[P1] evidence --render 文件不可解析: {args.render} ({e})", file=sys.stderr)
+            sys.exit(2)
+        lint_cmd += ["--render", args.render]
     lint = subprocess.run(lint_cmd, capture_output=True, text=True)
     ev["lint"] = {"exit": lint.returncode, "output": (lint.stdout + lint.stderr).strip()[-2000:]}
 

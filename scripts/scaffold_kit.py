@@ -318,9 +318,9 @@ footer.site{background:var(--night);color:var(--mist);border-top:1px solid rgba(
   <span class="side-label" aria-hidden="true">{t["BRAND"]} —— {t["USE_WHEN"]}</span>
   <div class="wrap">
     <p class="micro hero-eyebrow reveal in">{t["BRAND_EN"]} · {t["USE_WHEN"]}</p>
-    <h1>巨字主张上行，<br><span class="dim">下行接住它。</span></h1>
+    <h1>慢一点的器物，<br><span class="dim">用得久一点。</span></h1>
     <div class="hero-row">
-      <p class="hero-lede">两行以内的价值陈述,给一个具体的、可验证的承诺。<b>加粗句只给重点</b>——它会被读得最仔细。</p>
+      <p class="hero-lede">整板取形,三道手检,木蜡油收面。<b>档期每周三更新</b>——它决定你什么时候能用上。</p>
       <div class="hero-cta">
         <a class="btn-pale" href="#contact">预约工坊</a>
         <a class="btn-ghost-d" href="#works">看作品</a>
