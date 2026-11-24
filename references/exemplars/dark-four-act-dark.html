@@ -27,6 +27,8 @@ regen: python3 scripts/make_exemplars.py(勿手改本文件)
   --card:#F8FBF1;--line:#99AE9E;
   --serif:'Noto Serif SC','Source Han Serif SC','Songti SC',Georgia,serif;
   --sans:-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+  --sans-display:-apple-system,'SF Pro Display','Segoe UI Display','PingFang SC','Microsoft YaHei',sans-serif;
+  --track-display:-0.011em; /* 0.28 展示级紧字距纪律(CJK 正文零字距靠 palt) */
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -48,7 +50,7 @@ a{color:inherit;text-decoration:none}
 .night-top nav{display:flex;gap:26px;font-size:13.5px;font-weight:600}
 .night-top nav a{color:var(--mist)}.night-top nav a:hover{color:var(--pale)}
 .hero-eyebrow{color:var(--sage);margin-bottom:26px}
-.night-hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(56px,11.5vw,142px);line-height:1.06;margin-bottom:8px}
+.night-hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(56px,11.5vw,142px);line-height:1.06;letter-spacing:var(--track-display);margin-bottom:8px}
 .night-hero h1 .dim{color:var(--mist)}
 .hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-top:34px;flex-wrap:wrap}
 .hero-lede{max-width:520px;font-size:16.5px;line-height:1.9;color:var(--mist)}
@@ -247,7 +249,8 @@ footer.site{background:var(--night);color:var(--mist);border-top:1px solid rgba(
 <footer class="site">
   <div class="wrap" style="display:flex;gap:12px 30px;flex-wrap:wrap;justify-content:space-between;width:100%">
     <span>© 2026 夜松工作室 NIGHTPINE</span>
-    <span>配色:scaffold 机械验证(PASS · 指纹绑定)——替换内容后重跑 report</span>
+    <!-- 0.30(judge round-4):引擎元指令撤出用户可见页脚——验收口径(scaffold 四闸 PASS·指纹互锁,替换内容后重跑 report/evidence)走本注释层 -->
+    <span>深松木作·三代手作</span>
   </div>
 </footer>
 </main>

@@ -602,16 +602,19 @@ options:
 ```
 usage: palette_forge.py tokens [-h] [--palette PALETTE] [--theme THEME]
                                [--name NAME] [--brand BRAND] [--dark]
-                               [--out OUT]
+                               [--contrast {standard,high}] [--out OUT]
 
 options:
-  -h, --help         show this help message and exit
-  --palette PALETTE  色板,逗号分隔 hex
-  --theme THEME      主题包名(与 --palette 二选一)
-  --name NAME        令牌表名(写入注释头)
-  --brand BRAND      品牌名(写入注释)
-  --dark             深色为主(令牌明暗互换)
-  --out OUT          输出前缀(默认 tokens)
+  -h, --help            show this help message and exit
+  --palette PALETTE     色板,逗号分隔 hex
+  --theme THEME         主题包名(与 --palette 二选一)
+  --name NAME           令牌表名(写入注释头)
+  --brand BRAND         品牌名(写入注释)
+  --dark                深色为主(令牌明暗互换)
+  --contrast {standard,high}
+                        对比度旋钮(0.29):standard=WCAG 4.5+APCA Lc
+                        60/90;high=7.0+Lc 75/95(AAA 向)
+  --out OUT             输出前缀(默认 tokens)
 ```
 
 ## palette_forge typescale

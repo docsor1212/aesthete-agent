@@ -1,5 +1,5 @@
 ---
-version: 0.27.0
+version: 0.28.0
 name: aesthete-agent
 description: Color palette generation, frontend aesthetics, UI color schemes — mechanically validated color output for UI/HTML, SVG slides, video covers, charts and posters. An 119-palette evidence library matched by register, OKLCH harmony generation, luminance ramps and image extraction; 60-30-10 role mapping with semantic colors; a 5-dimension scorecard plus WCAG contrast, color-blind simulation and AI-slop detection as four mechanical gates; card and six-scene visualizer previews; a preference-learning profile that evolves with every verdict. Named theme packs, full contrast matrices, CB-safe data-viz palettes, five-lens critique reports, and APCA (WCAG 3 draft) perceptual contrast included. Pure stdlib, offline. Skip when pure text layout, translation or polishing, copywriting, or any task unrelated to color and frontend aesthetics. Trigger words — color palette, color scheme, palette generation, frontend aesthetics, UI color, design aesthetics, hex, contrast, WCAG, color blind, visual taste, aesthete-agent.
 ---
@@ -30,6 +30,21 @@ Why LLM color output is bad, with evidence: models treat hex codes as text, regr
 | Side-by-side for review | `make_variants` |
 | Token sheet | `tokens --palette/--theme` |
 | Render review loop | `loop page.html --palette` |
+
+### Golden defaults (3-second edition — defaults are the product, don't hand-tune)
+
+| Dimension | Engine default | Basis |
+|---|---|---|
+| Fluid type scale | display steps in `clamp()`, rem endpoints, **max≤2.5×min** (always passes WCAG 1.4.4) | web.dev |
+| Line height | display 1.15 / heading 1.3 / **body 1.7** (CJK band 1.5-2.0) / caption 1.5 | clreq + dual sources |
+| CJK–Latin | `text-autospace` + progressive `text-spacing-trim`; spacing handled by the engine, **never hand-typed spaces** | W3C clreq |
+| Font families | two tiers `--sans` (body) / `--sans-display` (display); display tracking `--track-display:-0.011em`, **zero body tracking** | Linear + clreq |
+| 12-step scale | Radix role binding: 1/2 backgrounds · 3/4/5 states · 6/7/8 borders · 9/10 solids · **11/12 text (APCA Lc 60/90 guaranteed)** | Radix docs |
+| Tokens | all CSS variables; alpha variants via `color-mix(in oklab,C 12%,transparent)`; OKLCH comments = perceptual coords | Tailwind v4 |
+| Contrast dial | `tokens --contrast high` = WCAG 7.0 + Lc 75/90+ (AAA direction) | Linear 3-input |
+| Motion | 150/300/600ms; entry stagger 60-120ms, end state = no-motion version | _motionlab |
+
+Principle: **defaults are the product** — these ship as engine output, don't hand-tune; to deviate, change the inputs (`--palette/--contrast/--ratio`), not the artifact.
 
 ## Capability × Boundary Quick Reference
 

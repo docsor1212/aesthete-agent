@@ -2027,8 +2027,11 @@ def cmd_tokens(args):
         sys.exit(2)
     payload, rc = token_sheet.emit(
         hexes, args.name or args.theme or "palette", args.brand or "",
-        dark=bool(args.dark), out_base=args.out or os.path.join(_safe_out_dir(), "tokens"))
-    print(f"tokens: {(args.out or 'tokens')}.css + .json — 裁决 {payload['verdict']}")
+        dark=bool(args.dark), out_base=args.out or os.path.join(_safe_out_dir(), "tokens"),
+        contrast=getattr(args, "contrast", "standard"))
+    print(f"tokens: {(args.out or 'tokens')}.css + .json — 裁决 {payload['verdict']}"
+          + (f" · contrast={payload.get('scale12_contrast', 'standard')}"
+             if payload.get("scale12") else ""))
     for k, v in payload["ratios"].items():
         print(f"  {k} = {v:.2f}:1")
     if payload["problems"]:
@@ -2593,6 +2596,8 @@ def main():
     s.add_argument("--name", default=None, help="令牌表名(写入注释头)")
     s.add_argument("--brand", default=None, help="品牌名(写入注释)")
     s.add_argument("--dark", action="store_true", help="深色为主(令牌明暗互换)")
+    s.add_argument("--contrast", default="standard", choices=["standard", "high"],
+                   help="对比度旋钮(0.29):standard=WCAG 4.5+APCA Lc 60/90;high=7.0+Lc 75/95(AAA 向)")
     s.add_argument("--out", default=None, help="输出前缀(默认 tokens)")
     s.set_defaults(fn=cmd_tokens)
 

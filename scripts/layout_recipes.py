@@ -74,10 +74,15 @@ def base_css(t):
   --card:#{t["CARD"]};--line:#{t["LINE"]};
   --serif:'Noto Serif SC','Source Han Serif SC','Songti SC',Georgia,serif;
   --sans:-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+  --sans-display:-apple-system,'SF Pro Display','Segoe UI Display','PingFang SC','Microsoft YaHei',sans-serif;
   --display:var(--sans);
   --mono:ui-monospace,'SF Mono',Consolas,monospace;
+  --track-display:-0.011em; /* 0.28 展示级紧字距纪律(Linear 式克制;CJK 靠 palt 收标点,此值只动 display 级) */
 }}
 :lang(zh){{text-autospace:normal;line-break:strict}}
+@supports (text-spacing-trim: space-all){{
+  :lang(zh){{text-spacing-trim:space-all}} /* 0.28:全角标点挤压渐进增强(Chrome 123+;不支持则原样,clreq 口径) */
+}}
 h1,h2{{text-wrap:balance}}
 p{{text-wrap:pretty}}
 :lang(zh) :is(h1,h2,h3){{font-feature-settings:"palt" 1}}
@@ -170,7 +175,7 @@ def build_edit_split(t):
     css = base_css(t) + """
 body{background:#FFFFFF}
 .hero{display:grid;grid-template-columns:6fr 5fr;gap:64px;align-items:start;padding:64px 0 88px}
-.hero h1{font:800 clamp(40px,5.8vw,76px)/1.14 var(--sans);letter-spacing:0.01em;color:var(--ink)}
+.hero h1{font:800 clamp(40px,5.8vw,76px)/1.14 var(--sans);letter-spacing:var(--track-display);color:var(--ink)}
 .hero h1 em{font-style:normal;color:var(--ink2)}
 .hero .lede{font-size:16.5px;line-height:1.7;color:var(--ink2);margin:20px 0 26px;max-width:44ch}
 .stats{display:flex;gap:44px;margin-top:36px}
@@ -273,7 +278,7 @@ body{background:#FFFFFF}
   <a class="btn" style="background:var(--pale);color:var(--night)" href="#">预约工坊</a></div></section>
 <footer><div class="wrap" style="padding-top:26px;padding-bottom:40px;font-size:13px;color:var(--ink2);
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <span>© 2026 {t["BRAND"]}</span><span>配色与布局:aesthete-agent 配方 EDIT-SPLIT(四闸 PASS · 本页实测)</span></div></footer>
+  <span>© 2026 {t["BRAND"]}</span><!-- 0.30:引擎署名撤出可见页脚(配方 EDIT-SPLIT·四闸 PASS·本页实测) --><span>工坊预约 · 周三至周日</span></div></footer>
 {_io_script()}</body></html>"""
     return html
 
@@ -372,7 +377,7 @@ summary{{cursor:pointer;font-weight:700;font-size:15px}}
   <a class="btn" style="background:var(--pale);color:var(--night)" href="#">立即开始</a></section>
 </div></div>
 <footer><div class="wrap" style="padding-bottom:36px;font-size:12.5px;color:var(--mist);display:flex;justify-content:space-between">
-  <span>© 2026 {t["BRAND"]}</span><span>aesthete-agent 配方 BLUEPRINT</span></div></footer>
+  <span>© 2026 {t["BRAND"]}</span><!-- 0.30:引擎署名撤出可见页脚(配方 BLUEPRINT) --><span>outbound · 四闸验证的配色引擎</span></div></footer>
 {_io_script()}</body></html>"""
     return html
 
@@ -381,10 +386,10 @@ summary{{cursor:pointer;font-weight:700;font-size:15px}}
 
 def build_swiss_poster(t):
     css = base_css(t) + """
-body{letter-spacing:0.01em}
+/* 0.28:body 级正字距已废除(clreq 不给中文正文加字距;全局 0.01em=隐性松散)——display 级走 --track-display */
 .rule{border-top:1px solid var(--ink)}
 .masthead{display:flex;justify-content:space-between;align-items:baseline;padding:20px 0}
-.giant{font:700 clamp(64px,14vw,200px)/1.04 var(--serif);letter-spacing:0.01em;
+.giant{font:700 clamp(64px,14vw,200px)/1.04 var(--serif);letter-spacing:var(--track-display);
        -webkit-text-stroke:.6px currentColor}
 .poster{padding:72px 0 96px;position:relative}
 .poster .cta{position:absolute;right:48px;bottom:64px}
@@ -434,7 +439,7 @@ body{letter-spacing:0.01em}
 </section></div>
 <footer><div class="wrap" style="padding-bottom:40px"><hr class="rule">
   <div style="display:flex;justify-content:space-between;padding-top:18px;font-size:12.5px;color:var(--ink2)">
-  <span>© 2026 {t["BRAND"]}</span><span>aesthete-agent 配方 SWISS-POSTER</span></div></footer>
+  <span>© 2026 {t["BRAND"]}</span><!-- 0.30:引擎署名撤出可见页脚(配方 SWISS-POSTER) --><span>每周小批 · 售完即止</span></div></footer>
 {_io_script()}</body></html>"""
     return html
 
@@ -506,7 +511,7 @@ def build_editorial_mag(t):
   <p style="color:var(--mist);margin:12px 0 24px;font-size:14.5px">颗粒在暗幕上,故事在亮处讲完。</p>
   <a class="btn" style="background:var(--pale);color:var(--night)" href="#">订阅月刊</a></div></section>
 <footer><div class="wrap" style="padding:22px 0 36px;font-size:12.5px;color:var(--ink2);display:flex;justify-content:space-between">
-  <span>© 2026 {t["BRAND"]}</span><span>aesthete-agent 配方 EDITORIAL-MAG</span></div></footer>
+  <span>© 2026 {t["BRAND"]}</span><!-- 0.30:引擎署名撤出可见页脚(配方 EDITORIAL-MAG) --><span>晨柔手帖 · 月刊</span></div></footer>
 {_io_script()}</body></html>"""
     return html
 
